@@ -2,6 +2,7 @@ package com.example.dansr
 
 import androidx.annotation.StringRes
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -14,11 +15,11 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.outlined.AccountCircle
 import androidx.compose.material.icons.outlined.Add
 import androidx.compose.material.icons.outlined.FavoriteBorder
 import androidx.compose.material.icons.outlined.Home
 import androidx.compose.material.icons.outlined.HourglassBottom
-import androidx.compose.material.icons.outlined.PersonOutline
 import androidx.compose.material.icons.outlined.StarBorder
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -82,14 +83,14 @@ fun DansRAppBar(
         title = {
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceEvenly,
+                horizontalArrangement = Arrangement.SpaceBetween,
             ) {
                 Column(
                     horizontalAlignment = Alignment.Start,
                     verticalArrangement = Arrangement.Center
                 ){
                     Image(
-                        painter = painterResource(id = R.drawable.logo_dansr),
+                        painter = painterResource(id = R.drawable.logo_dansr_blanc),
                         contentDescription = stringResource(R.string.logo_description),
                         modifier = Modifier
                             .size(40.dp)
@@ -110,7 +111,7 @@ fun DansRAppBar(
                     verticalArrangement = Arrangement.Center
                 ){
                     Icon(
-                        imageVector = Icons.Outlined.PersonOutline,
+                        imageVector = Icons.Outlined.AccountCircle,
                         contentDescription = stringResource(R.string.user_icon),
                         modifier = Modifier.size(40.dp)
                     )
@@ -130,7 +131,8 @@ fun GalleryTopBar(currentScreen: DansRScreen, navController: NavHostController) 
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 8.dp),
+            .padding(vertical = 2.dp)
+            .background(MaterialTheme.colorScheme.tertiaryContainer),
         horizontalArrangement = Arrangement.SpaceEvenly,
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -215,7 +217,8 @@ fun BottomBar(currentScreen: DansRScreen, navController: NavHostController) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 16.dp),
+            .background(MaterialTheme.colorScheme.primaryContainer)
+            .padding(vertical = 4.dp),
         horizontalArrangement = Arrangement.SpaceEvenly,
         verticalAlignment = Alignment.CenterVertically
     ) {
