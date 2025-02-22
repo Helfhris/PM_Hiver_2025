@@ -1,3 +1,17 @@
 <resources>
     <string name="app_name">DansR</string>
+    <string name="back_button">Back</string>
+    <string name="likes">Likes</string>
+    <string name="saved">Saved</string>
+    <string name="uploaded">Uploaded</string>
+    <string name="upload">Upload</string>
+    <string name="logo_description">The logo of the DansR app</string>
+
+    <string name="start_icon">Home page icon</string>
+    <string name="upload_icon">Upload page icon</string>
+    <string name="likes_icon">Likes page icon</string>
+    <string name="saved_icon">Saved page icon</string>
+    <string name="uploaded_icon">Uploaded page icon</string>
+    <string name="user_icon">User icon</string>
 </resources>
+
