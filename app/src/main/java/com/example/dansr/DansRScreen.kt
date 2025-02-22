@@ -1,5 +1,7 @@
 package com.example.dansr
 
+import GalleryPagerScreen
+import GalleryScreenContent
 import androidx.annotation.StringRes
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -296,13 +298,13 @@ fun DansRApp(
                 )*/
             }
             composable(route = DansRScreen.Likes.name) {
-                GalleryScreen(/*screen = DansRScreen.Likes*/)
+                GalleryPagerScreen(currentScreen = currentScreen, navController = navController)
             }
             composable(route = DansRScreen.Saved.name) {
-                GalleryScreen(/*screen = DansRScreen.Saved*/)
+                GalleryPagerScreen(currentScreen = currentScreen, navController = navController)
             }
             composable(route = DansRScreen.Uploaded.name) {
-                GalleryScreen(/*screen = DansRScreen.Uploaded*/)
+                GalleryPagerScreen(currentScreen = currentScreen, navController = navController)
             }
             composable(route = DansRScreen.Upload.name) {
                 //UploadScreen()
