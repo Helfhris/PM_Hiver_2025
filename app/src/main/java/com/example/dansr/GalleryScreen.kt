@@ -15,7 +15,7 @@ import androidx.compose.ui.unit.dp
 fun GalleryScreen() {
     val rows = 10
     val columns = 3
-    val placeholderList = List(rows) { List(columns) { R.drawable.videoplaceholder } }
+    val placeholderList = List(rows) { List(columns) { R.drawable.videoplaceholder_dark } }
 
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
