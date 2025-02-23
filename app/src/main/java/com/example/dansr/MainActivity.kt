@@ -48,128 +48,155 @@ fun VideoCaptureScreen() {
     var videoUri by remember { mutableStateOf<Uri?>(null) }
 
     Box(modifier = Modifier.fillMaxSize()) {
-        Column(
-            modifier = Modifier.fillMaxSize()
-        ) {
-            // Partie haute avec couleur de fond rose
-            Column(
-                modifier = Modifier
-                    .weight(1f)
-                    .fillMaxWidth()
-                    .background(Color(0xFFF1C6D3)) // Rose pale
-                    .padding(16.dp)
-            ) {
-                // Titre
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(top = 50.dp)
-                        .wrapContentHeight()
-                        .align(Alignment.CenterHorizontally)
+        // Vérifie si une vidéo est sélectionnée ou capturée
+        if (videoUri != null) {
+            Box(modifier = Modifier.fillMaxSize()) {
+                VideoPlayer(videoUri = videoUri!!)
+                Column(
+                    modifier = Modifier.fillMaxSize(),
+                    verticalArrangement = Arrangement.Bottom,
+                    horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    Text(
-                        "Sélectionnez !!",
-                        style = MaterialTheme.typography.titleLarge,
-                        modifier = Modifier.align(Alignment.Center)
-                    )
-                }
-
-                // Image du doigt qui clique
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(top = 16.dp)
-                        .wrapContentHeight()
-                        .align(Alignment.CenterHorizontally)
-                ) {
-                    Image(
-                        painter = painterResource(id = R.drawable.touching),
-                        contentDescription = "Touching Image",
+                    Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(200.dp)
-                    )
+                            .padding(16.dp),
+                        horizontalArrangement = Arrangement.SpaceEvenly
+                    ) {
+                        Button(onClick = { videoUri = null }) {
+                            Text("Recommencer")
+                        }
+                        Button(onClick = { }) {
+                            Text("Publier")
+                        }
+                    }
                 }
+            }
+        } else {
+            Column(
+                modifier = Modifier.fillMaxSize()
+            ) {
+                // Partie haute avec couleur de fond rose
+                Column(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxWidth()
+                        .background(Color(0xFFF1C6D3)) // Rose pale
+                        .padding(16.dp)
+                ) {
+                    // Titre
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = 50.dp)
+                            .wrapContentHeight()
+                            .align(Alignment.CenterHorizontally)
+                    ) {
+                        Text(
+                            "Sélectionnez !!",
+                            style = MaterialTheme.typography.titleLarge,
+                            modifier = Modifier.align(Alignment.Center)
+                        )
+                    }
 
-                // Ouvrir la galerie pour sélectionner une vidéo
-                val pickVideoLauncher = rememberLauncherForActivityResult(
-                    contract = ActivityResultContracts.GetContent()
-                ) { uri: Uri? ->
-                    if (uri != null) {
-                        videoUri = uri
-                    } else {
-                        Toast.makeText(context, "Aucune vidéo sélectionnée", Toast.LENGTH_SHORT).show()
+                    // Image du doigt qui clique
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = 16.dp)
+                            .wrapContentHeight()
+                            .align(Alignment.CenterHorizontally)
+                    ) {
+                        Image(
+                            painter = painterResource(id = R.drawable.touching),
+                            contentDescription = "Touching Image",
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(200.dp)
+                        )
+                    }
+
+                    // Ouvrir la galerie pour sélectionner une vidéo
+                    val pickVideoLauncher = rememberLauncherForActivityResult(
+                        contract = ActivityResultContracts.GetContent()
+                    ) { uri: Uri? ->
+                        if (uri != null) {
+                            videoUri = uri
+                        } else {
+                            Toast.makeText(context, "Aucune vidéo sélectionnée", Toast.LENGTH_SHORT).show()
+                        }
+                    }
+
+                    // Bouton pour choisir la vidéo
+                    Button(
+                        onClick = {
+                            pickVideoLauncher.launch("video/*")
+                        },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(56.dp)
+                            .padding(top = 16.dp)
+                    ) {
+                        Text("Voir votre galerie")
                     }
                 }
 
-                // Bouton pour choisir la vidéo
-                Button(
-                    onClick = {
-                        pickVideoLauncher.launch("video/*")
-                    },
+                // Partie basse avec couleur de fond verte
+                Column(
                     modifier = Modifier
+                        .weight(1f)
                         .fillMaxWidth()
-                        .height(56.dp)
-                        .padding(top = 16.dp)
+                        .background(Color(0xFFB2E8B1))// Vert pale
+                        .padding(16.dp)
                 ) {
-                    Text("Voir votre galerie")
-                }
-            }
-
-            // Partie basse avec couleur de fond verte
-            Column(
-                modifier = Modifier
-                    .weight(1f)
-                    .fillMaxWidth()
-                    .background(Color(0xFFB2E8B1))// Vert pale
-                    .padding(16.dp)
-            ) {
-                // Titre
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(top = 50.dp)
-                        .wrapContentHeight()
-                        .align(Alignment.CenterHorizontally)
-                ) {
-                    Text(
-                        "Dansez !!",
-                        style = MaterialTheme.typography.titleLarge,
-                        modifier = Modifier.align(Alignment.Center)
-                    )
-                }
-
-                // Image du stickman qui danse
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(top = 16.dp)
-                        .wrapContentHeight()
-                        .align(Alignment.CenterHorizontally)
-                ) {
-                    Image(
-                        painter = painterResource(id = R.drawable.dancing),
-                        contentDescription = "Dancing Image",
+                    // Titre
+                    Box(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(200.dp)
+                            .padding(top = 50.dp)
+                            .wrapContentHeight()
+                            .align(Alignment.CenterHorizontally)
+                    ) {
+                        Text(
+                            "Dansez !!",
+                            style = MaterialTheme.typography.titleLarge,
+                            modifier = Modifier.align(Alignment.Center)
+                        )
+                    }
+
+                    // Image du stickman qui danse
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = 16.dp)
+                            .wrapContentHeight()
+                            .align(Alignment.CenterHorizontally)
+                    ) {
+                        Image(
+                            painter = painterResource(id = R.drawable.dancing),
+                            contentDescription = "Dancing Image",
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(200.dp)
+                        )
+                    }
+
+                    // Bouton pour prendre une vidéo
+                    CaptureVideoButton(
+                        onVideoCaptured = { uri ->
+                            videoUri = uri
+                        },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(56.dp)
+                            .padding(top = 16.dp)
                     )
                 }
-
-                // Bouton pour prendre une vidéo
-                CaptureVideoButton(
-                    onVideoCaptured = { uri ->
-                        videoUri = uri
-                    },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(56.dp)
-                        .padding(top = 16.dp)
-                )
             }
         }
     }
 }
+
 
 @Composable
 fun CaptureVideoButton(onVideoCaptured: (Uri) -> Unit, modifier: Modifier = Modifier) {
