@@ -51,6 +51,16 @@ dependencies {
     implementation(libs.androidx.material3)
     implementation(libs.androidx.compose.material.icons.extended)
     implementation(libs.androidx.navigation.compose)
+    implementation(libs.exoPlayer)
+    implementation(libs.exoPlayer.core)
+    implementation(libs.exoPlayer.ui)
+    implementation(libs.accompanist.pager)
+    implementation(libs.androidx.media3.exoplayer)
+    implementation(libs.androidx.media3.common.ktx)
+    implementation(libs.androidx.media3.ui)
+    implementation(libs.androidx.media)
+    implementation(libs.androidx.media)
+    implementation(libs.androidx.media)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
@@ -58,7 +68,6 @@ dependencies {
     androidTestImplementation(libs.androidx.ui.test.junit4)
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
-    implementation(libs.accompanist.pager)
 
 
 }
