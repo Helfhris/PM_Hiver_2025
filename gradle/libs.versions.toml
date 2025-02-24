@@ -10,6 +10,11 @@ activityCompose = "1.10.0"
 composeBom = "2024.04.01"
 navigationCompose = "2.8.7"
 accompanist = "0.32.0"
+exoPlayer = "2.19.1"
+media3Exoplayer = "1.5.1"
+media3CommonKtx = "1.5.1"
+media3Ui = "1.5.1"
+media = "1.6.0"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -29,6 +34,13 @@ androidx-material3 = { group = "androidx.compose.material3", name = "material3" 
 androidx-compose-material-icons-extended = { module = "androidx.compose.material:material-icons-extended", version = "1.7.8" }
 androidx-navigation-compose = { group = "androidx.navigation", name = "navigation-compose", version.ref = "navigationCompose" }
 accompanist-pager = { module = "com.google.accompanist:accompanist-pager", version.ref = "accompanist" }
+exoPlayer-core = { module = "com.google.android.exoplayer:exoplayer-core", version.ref = "exoPlayer" }
+exoPlayer-ui = { module = "com.google.android.exoplayer:exoplayer-ui", version.ref = "exoPlayer" }
+exoPlayer = { module = "com.google.android.exoplayer:exoplayer", version.ref = "exoPlayer" }
+androidx-media3-exoplayer = { group = "androidx.media3", name = "media3-exoplayer", version.ref = "media3Exoplayer" }
+androidx-media3-common-ktx = { group = "androidx.media3", name = "media3-common-ktx", version.ref = "media3CommonKtx" }
+androidx-media3-ui = { group = "androidx.media3", name = "media3-ui", version.ref = "media3Ui" }
+androidx-media = { group = "androidx.media", name = "media", version.ref = "media" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
