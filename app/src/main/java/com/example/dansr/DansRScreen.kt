@@ -307,7 +307,7 @@ fun DansRApp(
                 GalleryPagerScreen(currentScreen = currentScreen, navController = navController)
             }
             composable(route = DansRScreen.Upload.name) {
-                //UploadScreen()
+                VideoCaptureScreen(navController = navController)
             }
         }
     }
