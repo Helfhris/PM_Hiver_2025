@@ -34,6 +34,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.currentCompositionLocalContext
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -50,6 +51,7 @@ import androidx.navigation.compose.rememberNavController
 import com.example.dansr.ui.MainViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavGraph.Companion.findStartDestination
+
 
 enum class DansRScreen(@StringRes val title: Int) {
     Start(title = R.string.app_name),
@@ -292,7 +294,10 @@ fun DansRApp(
             modifier = Modifier.padding(innerPadding)
         ) {
             composable(route = DansRScreen.Start.name) {
-                // Accueil ou autre écran si nécessaire
+                /*HomeScreen(
+                    onNavigate = { screen -> navController.navigate(screen.name) }
+                )*/
+                VideoPlayerScreen(context = LocalContext.current, navController = navController)
             }
             composable(route = DansRScreen.Likes.name) {
                 GalleryPagerScreen(currentScreen = currentScreen, navController = navController)
@@ -316,4 +321,3 @@ fun DansRApp(
         }
     }
 }
-
