@@ -131,6 +131,16 @@ fun GalleryScreenContent(screen: DansRScreen, navController: NavController) {
                     Text("Apprendre cette danse")
                 }
 
+                //Bouton pour apprendre la danse
+                Button(
+                    onClick = {
+                        navController.navigate("LearningScreen/$videoPath")
+                    },
+                    modifier = Modifier.padding(16.dp)
+                ) {
+                    Text("Apprendre cette danse")
+                }
+
                 // Bouton de fermeture
                 androidx.compose.material3.Icon(
                     imageVector = Icons.Outlined.Close,

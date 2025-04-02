@@ -262,7 +262,7 @@ fun DansRApp(
     val uiState by viewModel.uiState.collectAsState()
     val backStackEntry by navController.currentBackStackEntryAsState()
 
-    // Determine the current screen based on back stack
+    // Déterminer l'écran actuel en fonction de la pile d'écran
     val currentScreen = DansRScreen.valueOf(
         backStackEntry?.destination?.route ?: DansRScreen.Start.name
     )
@@ -293,9 +293,7 @@ fun DansRApp(
             modifier = Modifier.padding(innerPadding)
         ) {
             composable(route = DansRScreen.Start.name) {
-                /*HomeScreen(
-                    onNavigate = { screen -> navController.navigate(screen.name) }
-                )*/
+                // Accueil ou autre écran si nécessaire
             }
             composable(route = DansRScreen.Likes.name) {
                 GalleryPagerScreen(currentScreen = currentScreen, navController = navController)
@@ -309,6 +307,12 @@ fun DansRApp(
             composable(route = DansRScreen.Upload.name) {
                 VideoCaptureScreen(navController = navController)
             }
+            composable(route = "LearningScreen/{videoPath}") { backStackEntry ->
+                val videoPath = backStackEntry.arguments?.getString("videoPath") ?: ""
+                LearningScreen(videoPath, navController)
+            }
+
         }
     }
 }
+
