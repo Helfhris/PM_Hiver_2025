@@ -2,6 +2,7 @@ package com.example.dansr
 
 import GalleryPagerScreen
 import GalleryScreenContent
+import LearningScreen
 import androidx.annotation.StringRes
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -49,7 +50,6 @@ import androidx.navigation.compose.rememberNavController
 import com.example.dansr.ui.MainViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavGraph.Companion.findStartDestination
-
 
 enum class DansRScreen(@StringRes val title: Int) {
     Start(title = R.string.app_name),
@@ -263,9 +263,8 @@ fun DansRApp(
     val backStackEntry by navController.currentBackStackEntryAsState()
 
     // Déterminer l'écran actuel en fonction de la pile d'écran
-    val currentScreen = DansRScreen.valueOf(
-        backStackEntry?.destination?.route ?: DansRScreen.Start.name
-    )
+    val currentRoute = backStackEntry?.destination?.route
+    val currentScreen = DansRScreen.entries.find { it.name == currentRoute } ?: DansRScreen.Start
 
     val showGalleryTopBar = currentScreen in listOf(DansRScreen.Likes, DansRScreen.Saved, DansRScreen.Uploaded)
 
@@ -307,11 +306,13 @@ fun DansRApp(
             composable(route = DansRScreen.Upload.name) {
                 VideoCaptureScreen(navController = navController)
             }
-            composable(route = "LearningScreen/{videoPath}") { backStackEntry ->
-                val videoPath = backStackEntry.arguments?.getString("videoPath") ?: ""
+            composable(route = "LearningScreen") { backStackEntry ->
+                val videoPath = navController.previousBackStackEntry
+                    ?.savedStateHandle
+                    ?.get<String>("videoPath") ?: ""
+
                 LearningScreen(videoPath, navController)
             }
-
         }
     }
 }

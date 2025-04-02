@@ -1,26 +1,21 @@
-package com.example.dansr
-
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Button
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.foundation.layout.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Pause
+import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.Replay
+import androidx.compose.material.icons.filled.Flag
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.media3.ui.PlayerView
 import androidx.navigation.NavController
 import createExoPlayerWithAssets
+import androidx.compose.material3.MaterialTheme
 
 @Composable
 fun LearningScreen(videoPath: String, navController: NavController) {
@@ -49,26 +44,55 @@ fun LearningScreen(videoPath: String, navController: NavController) {
                 .padding(16.dp),
             horizontalArrangement = Arrangement.SpaceEvenly
         ) {
-            Button(onClick = {
-                isPlaying = !isPlaying
-                exoPlayer.playWhenReady = isPlaying
-            }) {
-                Text(if (isPlaying) "Pause" else "Reprendre")
+            // Bouton Pause / Reprendre
+            Button(
+                onClick = {
+                    isPlaying = !isPlaying
+                    exoPlayer.playWhenReady = isPlaying
+                },
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = if (isPlaying) Color.Red else Color.Green
+                )
+            ) {
+                Icon(
+                    imageVector = if (isPlaying) Icons.Filled.Pause else Icons.Filled.PlayArrow,
+                    contentDescription = if (isPlaying) "Pause" else "Reprendre",
+                    tint = Color.Black,
+                    modifier = Modifier.size(32.dp)
+                )
             }
 
-            Button(onClick = {
-                exoPlayer.seekTo(0) // Recommencer depuis le début
-                exoPlayer.playWhenReady = true
-                isPlaying = true
-            }) {
-                Text("Restart")
+            // Bouton Restart
+            Button(
+                onClick = {
+                    exoPlayer.seekTo(0) // Recommencer depuis le début
+                    exoPlayer.playWhenReady = true
+                    isPlaying = true
+                },
+                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFFA500))
+            ) {
+                Icon(
+                    imageVector = Icons.Filled.Replay,
+                    contentDescription = "Recommencer",
+                    tint = Color.Black,
+                    modifier = Modifier.size(32.dp)
+                )
             }
 
-            Button(onClick = {
-                exoPlayer.pause() // Mettre la vidéo en pause
-                navController.navigate("CameraScreen") // Aller à l'écran de la caméra
-            }) {
-                Text("Start")
+            // Bouton Drapeau (Start)
+            Button(
+                onClick = {
+                    exoPlayer.pause() // Mettre la vidéo en pause
+                    navController.navigate("CameraScreen") // Aller à l'écran de la caméra
+                },
+                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.tertiaryContainer)
+            ) {
+                Icon(
+                    imageVector = Icons.Filled.Flag,
+                    contentDescription = "Drapeau",
+                    tint = Color.White,
+                    modifier = Modifier.size(32.dp)
+                )
             }
         }
     }

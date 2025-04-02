@@ -122,21 +122,13 @@ fun GalleryScreenContent(screen: DansRScreen, navController: NavController) {
                         learningVideo = videoPath // Marquer la vidéo pour l'apprentissage
                         selectedVideo = null      // Fermer la lecture
                         exoPlayer.release()
-                        navController.navigate("LearningScreen/$videoPath") // Aller à l'écran d'apprentissage
+                        navController.currentBackStackEntry?.savedStateHandle?.set("videoPath", videoPath)
+                        navController.navigate("LearningScreen")
+
                     },
                     modifier = Modifier
                         .align(Alignment.BottomCenter)
                         .padding(16.dp)
-                ) {
-                    Text("Apprendre cette danse")
-                }
-
-                //Bouton pour apprendre la danse
-                Button(
-                    onClick = {
-                        navController.navigate("LearningScreen/$videoPath")
-                    },
-                    modifier = Modifier.padding(16.dp)
                 ) {
                     Text("Apprendre cette danse")
                 }
