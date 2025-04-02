@@ -26,6 +26,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Add
 import androidx.compose.material.icons.outlined.Close
+import androidx.compose.material3.Button
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalConfiguration
@@ -66,10 +67,11 @@ fun GalleryScreenContent(screen: DansRScreen, navController: NavController) {
     val context = LocalContext.current
     val videoFiles = remember { getVideoFilesFromAssets(context, screen) }
 
-    var selectedVideo by remember { mutableStateOf<String?>(null) } // Track the selected video
+    var selectedVideo by remember { mutableStateOf<String?>(null) } // Vidéo en cours de lecture
+    var learningVideo by remember { mutableStateOf<String?>(null) } // Vidéo sélectionnée pour l'apprentissage
 
     val columns = 3
-    val rows = videoFiles.chunked(columns.coerceAtLeast(1)) // Group videos into rows
+    val rows = videoFiles.chunked(columns.coerceAtLeast(1)) // Groupement en lignes
 
     Box(modifier = Modifier.fillMaxSize()) {
         LazyColumn(
@@ -80,29 +82,28 @@ fun GalleryScreenContent(screen: DansRScreen, navController: NavController) {
                 LazyRow(horizontalArrangement = Arrangement.Start) {
                     items(row) { videoFile ->
                         VideoThumbnail(videoPath = videoFile) {
-                            selectedVideo = videoFile // Open video on click
+                            selectedVideo = videoFile // Ouvrir la vidéo au clic
                         }
                     }
                 }
             }
         }
 
-        // Overlay when a video is playing
+        // Overlay lorsque la vidéo est en cours de lecture
         selectedVideo?.let { videoPath ->
             val exoPlayer = remember { createExoPlayerWithAssets(context, videoPath) }
-            var isPlaying by remember { mutableStateOf(true) } // Track play/pause state
+            var isPlaying by remember { mutableStateOf(true) }
 
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(androidx.compose.ui.graphics.Color.Black.copy(alpha = 0.8f)) // Darken the background
+                    .background(androidx.compose.ui.graphics.Color.Black.copy(alpha = 0.8f))
             ) {
-                // Click to pause/resume the video
                 AndroidView(
                     factory = { ctx ->
                         PlayerView(ctx).apply {
                             player = exoPlayer
-                            useController = false // Hide default controls
+                            useController = false
                         }
                     },
                     modifier = Modifier
@@ -115,10 +116,25 @@ fun GalleryScreenContent(screen: DansRScreen, navController: NavController) {
                         }
                 )
 
-                // Close button (Top-left)
+                // Bouton "Apprendre cette danse"
+                Button(
+                    onClick = {
+                        learningVideo = videoPath // Marquer la vidéo pour l'apprentissage
+                        selectedVideo = null      // Fermer la lecture
+                        exoPlayer.release()
+                        navController.navigate("LearningScreen/$videoPath") // Aller à l'écran d'apprentissage
+                    },
+                    modifier = Modifier
+                        .align(Alignment.BottomCenter)
+                        .padding(16.dp)
+                ) {
+                    Text("Apprendre cette danse")
+                }
+
+                // Bouton de fermeture
                 androidx.compose.material3.Icon(
                     imageVector = Icons.Outlined.Close,
-                    contentDescription = "Close Video",
+                    contentDescription = "Fermer la vidéo",
                     tint = androidx.compose.ui.graphics.Color.White,
                     modifier = Modifier
                         .padding(16.dp)
@@ -126,13 +142,14 @@ fun GalleryScreenContent(screen: DansRScreen, navController: NavController) {
                         .align(Alignment.TopStart)
                         .clickable {
                             exoPlayer.release()
-                            selectedVideo = null // Close video
+                            selectedVideo = null
                         }
                 )
             }
         }
     }
 }
+
 
 
 
