@@ -1,12 +1,27 @@
 package com.example.dansr
 
+import VideoStatus
 import android.content.Context
 import android.net.Uri
 import android.util.Log
 import android.widget.Toast
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectDragGestures
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Add
+import androidx.compose.material.icons.outlined.Favorite
+import androidx.compose.material.icons.outlined.FavoriteBorder
+import androidx.compose.material.icons.outlined.HourglassBottom
+import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -15,30 +30,54 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.media3.common.MediaItem
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.ui.PlayerView
+import androidx.navigation.NavController
+import androidx.navigation.NavGraph.Companion.findStartDestination
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import loadVideoStatuses
 import markVideoAsSaved
+import saveVideoStatuses
 import java.io.File
 import java.io.FileInputStream
 import java.io.FileOutputStream
 import java.io.IOException
 import java.io.InputStream
+import kotlin.math.abs
 
 @Composable
-fun VideoPlayerScreen(context: Context) {
+fun VideoPlayerScreen(context: Context, navController: NavController) {
     var videoList by remember { mutableStateOf(listOf<Uri>()) }
     var currentVideoIndex by remember { mutableIntStateOf(0) }
     val player = remember { ExoPlayer.Builder(context).build() }
     var dragState by remember { mutableStateOf(DragState.IDLE) }
+    val currentContext = LocalContext.current
+
+    // Get current video status
+    val currentVideoUri = if (videoList.isNotEmpty()) videoList[currentVideoIndex] else null
+    val currentFileName = currentVideoUri?.toString()?.substringAfterLast("/")
+    val videoStatuses = loadVideoStatuses(context)
+    val currentVideoStatus = currentFileName?.let { fileName ->
+        videoStatuses.find { it.fileName == fileName }
+    }
+    var isLiked by remember { mutableStateOf(currentVideoStatus?.isLiked ?: false) }
+
+    // Update isLiked when video changes
+    LaunchedEffect(currentVideoIndex) {
+        isLiked = currentVideoStatus?.isLiked ?: false
+    }
 
     // Function to add a new random video if needed
     fun addRandomVideo() {
@@ -106,39 +145,52 @@ fun VideoPlayerScreen(context: Context) {
             .pointerInput(Unit) {
                 detectDragGestures(
                     onDragStart = { dragState = DragState.DRAGGING },
-                    onDrag = { _, dragAmount ->
-                        if (videoList.isEmpty() || dragState != DragState.DRAGGING) return@detectDragGestures
+                    onDrag = { change, dragAmount ->
+                        if (videoList.isEmpty()) return@detectDragGestures
 
-                        val verticalThreshold = 100f
-                        val horizontalThreshold = 100f
+                        // Use lower thresholds for better sensitivity
+                        val verticalThreshold = 60f
+                        val horizontalThreshold = 60f
+
+                        // Consume the position change to prevent multiple triggers
+                        change.consume()
 
                         when {
-                            // Scroll Up → Next Video
-                            dragAmount.y < -verticalThreshold -> {
+                            // Next Video (swipe up)
+                            dragAmount.y < -verticalThreshold && abs(dragAmount.y) > abs(dragAmount.x) -> {
                                 if (currentVideoIndex == videoList.size - 1) addRandomVideo()
                                 currentVideoIndex = (currentVideoIndex + 1).coerceAtMost(videoList.size - 1)
-                                dragState = DragState.IDLE
+                                dragState = DragState.COMPLETED
                             }
-                            // Scroll Down → Previous Video
-                            dragAmount.y > verticalThreshold -> {
+                            // Previous Video (swipe down)
+                            dragAmount.y > verticalThreshold && abs(dragAmount.y) > abs(dragAmount.x) -> {
                                 currentVideoIndex = (currentVideoIndex - 1).coerceAtLeast(0)
-                                dragState = DragState.IDLE
+                                dragState = DragState.COMPLETED
                             }
-                            // Scroll Left -> Save Video
-                            dragAmount.x < -horizontalThreshold -> {
-                                val currentVideoUri = videoList[currentVideoIndex]
-                                val fileName = currentVideoUri.toString().substringAfterLast("/")
-                                markVideoAsSaved(context, fileName)
-                                dragState = DragState.IDLE
+                            // Save Video (swipe left)
+                            dragAmount.x < -horizontalThreshold && abs(dragAmount.x) > abs(dragAmount.y) -> {
+                                currentVideoUri?.let {
+                                    val fileName = it.toString().substringAfterLast("/")
+                                    markVideoAsSaved(context, fileName)
+                                    // Add visual feedback
+                                    Toast.makeText(context, "Video saved", Toast.LENGTH_SHORT).show()
+                                }
+                                dragState = DragState.COMPLETED
                             }
-                            // Scroll Right → Placeholder
-                            dragAmount.x > horizontalThreshold -> {
-                                dragState = DragState.IDLE
+                            // Upload (swipe right)
+                            dragAmount.x > horizontalThreshold && abs(dragAmount.x) > abs(dragAmount.y) -> {
+                                navController.navigate(DansRScreen.Upload.name) {
+                                    popUpTo(navController.graph.findStartDestination().id)
+                                    launchSingleTop = true
+                                }
+                                dragState = DragState.COMPLETED
                             }
                         }
                     },
                     onDragEnd = {
-                        dragState = DragState.IDLE
+                        if (dragState == DragState.DRAGGING) {
+                            dragState = DragState.IDLE
+                        }
                     }
                 )
             }
@@ -154,9 +206,83 @@ fun VideoPlayerScreen(context: Context) {
                 modifier = Modifier.fillMaxSize()
             )
         }
+
+        // Overlay with buttons
+        Box(modifier = Modifier.fillMaxSize()) {
+            // Left button (HourglassBottom) - same as dragging left
+            Box(
+                modifier = Modifier
+                    .align(Alignment.CenterStart)
+                    .padding(16.dp)
+                    .clickable {
+                        currentVideoUri?.let {
+                            val fileName = it.toString().substringAfterLast("/")
+                            markVideoAsSaved(context, fileName)
+                        }
+                    }
+            ) {
+                Icon(
+                    imageVector = Icons.Outlined.HourglassBottom,
+                    contentDescription = "Save Video",
+                    tint = Color.White.copy(alpha = 0.5f),
+                    modifier = Modifier.size(48.dp)
+                )
+            }
+
+            // Right button (Add) - navigate to upload screen
+            Box(
+                modifier = Modifier
+                    .align(Alignment.CenterEnd)
+                    .padding(16.dp)
+                    .clickable {
+                        navController.navigate(DansRScreen.Upload.name) {
+                            popUpTo = navController.graph.findStartDestination().id
+                            launchSingleTop = true
+                        }
+                    }
+            ) {
+                Icon(
+                    imageVector = Icons.Outlined.Add,
+                    contentDescription = "Upload",
+                    tint = Color.White.copy(alpha = 0.5f),
+                    modifier = Modifier.size(48.dp)
+                )
+            }
+
+            // Bottom center button (Favorite) - toggle like status
+            Box(
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .padding(bottom = 32.dp)
+                    .clickable {
+                        currentFileName?.let { fileName ->
+                            val statuses = loadVideoStatuses(context).toMutableList()
+                            val existingStatus = statuses.find { it.fileName == fileName }
+
+                            if (existingStatus != null) {
+                                existingStatus.isLiked = !existingStatus.isLiked
+                                isLiked = existingStatus.isLiked
+                                val message = if (isLiked) "Added to likes!" else "Removed from likes"
+                                Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
+                            } else {
+                                statuses.add(VideoStatus(fileName, isLiked = true))
+                                isLiked = true
+                                Toast.makeText(context, "Added to likes!", Toast.LENGTH_SHORT).show()
+                            }
+                            saveVideoStatuses(context, statuses)
+                        }
+                    }
+            ) {
+                Icon(
+                    imageVector = if (isLiked) Icons.Outlined.Favorite else Icons.Outlined.FavoriteBorder,
+                    contentDescription = "Like",
+                    tint = if (isLiked) Color.Red.copy(alpha = 0.7f) else Color.White.copy(alpha = 0.5f),
+                    modifier = Modifier.size(48.dp)
+                )
+            }
+        }
     }
 }
-
 
 fun getRandomVideoFromAssets(context: Context): String? {
     val folderName = "videos" // Updated to use the unified folder
@@ -176,5 +302,5 @@ fun getRandomVideoFromAssets(context: Context): String? {
 }
 
 enum class DragState {
-    IDLE, DRAGGING
+    IDLE, DRAGGING, COMPLETED
 }

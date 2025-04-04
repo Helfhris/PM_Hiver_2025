@@ -30,7 +30,7 @@ fun loadVideoStatuses(context: Context): List<VideoStatus> {
     }
 }
 
-private fun saveVideoStatuses(context: Context, statuses: List<VideoStatus>) {
+fun saveVideoStatuses(context: Context, statuses: List<VideoStatus>) {
     val statusFile = getStatusFile(context)
     statusFile.parentFile?.mkdirs() // Create directory if needed
     val jsonString = Gson().toJson(statuses)
