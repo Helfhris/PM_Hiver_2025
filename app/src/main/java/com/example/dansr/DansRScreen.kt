@@ -20,10 +20,13 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.outlined.AccountCircle
 import androidx.compose.material.icons.outlined.Add
+import androidx.compose.material.icons.outlined.Apps
 import androidx.compose.material.icons.outlined.FavoriteBorder
 import androidx.compose.material.icons.outlined.Home
 import androidx.compose.material.icons.outlined.HourglassBottom
 import androidx.compose.material.icons.outlined.StarBorder
+import androidx.compose.material.icons.outlined.ViewCozy
+import androidx.compose.material.icons.outlined.ViewWeek
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -71,16 +74,16 @@ fun DansRAppBar(
 ) {
     val screenIcons = mapOf(
         DansRScreen.Start to Icons.Outlined.Home,
-        DansRScreen.Likes to Icons.Outlined.FavoriteBorder,
-        DansRScreen.Saved to Icons.Outlined.HourglassBottom,
-        DansRScreen.Uploaded to Icons.Outlined.StarBorder,
+        DansRScreen.Likes to Icons.Outlined.ViewWeek,
+        DansRScreen.Saved to Icons.Outlined.ViewWeek,
+        DansRScreen.Uploaded to Icons.Outlined.ViewWeek,
         DansRScreen.Upload to Icons.Outlined.Add,
     )
     val screenIconDescriptions = mapOf(
         DansRScreen.Start to R.string.start_icon,
-        DansRScreen.Likes to R.string.likes_icon,
-        DansRScreen.Saved to R.string.saved_icon,
-        DansRScreen.Uploaded to R.string.uploaded_icon,
+        DansRScreen.Likes to R.string.gallery_icon,
+        DansRScreen.Saved to R.string.gallery_icon,
+        DansRScreen.Uploaded to R.string.gallery_icon,
         DansRScreen.Upload to R.string.upload_icon,
     )
     TopAppBar(
@@ -182,40 +185,20 @@ fun GalleryTopBar(currentScreen: DansRScreen, navController: NavHostController) 
 
 @Composable
 fun BottomBar(currentScreen: DansRScreen, navController: NavHostController) {
-    val (screens, icons, iconDescriptions) = if (currentScreen in listOf(DansRScreen.Likes, DansRScreen.Saved, DansRScreen.Uploaded)) {
+    val (screens, icons, iconDescriptions) =
         Triple(
-            listOf(DansRScreen.Start, DansRScreen.Upload),
+            listOf(DansRScreen.Likes, DansRScreen.Start, DansRScreen.Upload),
             listOf(
+                Icons.Outlined.ViewWeek,
                 Icons.Outlined.Home,
                 Icons.Outlined.Add
             ),
             listOf(
+                R.string.gallery_icon,
                 R.string.start_icon,
                 R.string.upload_icon
             )
-        )
-    } else {
-        Triple(
-            listOf(
-                DansRScreen.Likes,
-                DansRScreen.Saved,
-                DansRScreen.Uploaded,
-                DansRScreen.Upload
-            ),
-            listOf(
-                Icons.Outlined.FavoriteBorder,
-                Icons.Outlined.HourglassBottom,
-                Icons.Outlined.StarBorder,
-                Icons.Outlined.Add
-            ),
-            listOf(
-                R.string.likes_icon,
-                R.string.saved_icon,
-                R.string.uploaded_icon,
-                R.string.upload_icon
-            )
-        )
-    }
+        );
 
     // Iterate over the screens and show the corresponding icons
     Row(
