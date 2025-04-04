@@ -2,6 +2,8 @@ package com.example.dansr
 
 import android.content.Context
 import android.net.Uri
+import android.util.Log
+import android.widget.Toast
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -24,6 +26,7 @@ import androidx.media3.ui.PlayerView
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import markVideoAsSaved
 import java.io.File
 import java.io.FileInputStream
 import java.io.FileOutputStream
@@ -123,7 +126,9 @@ fun VideoPlayerScreen(context: Context) {
                             }
                             // Scroll Left -> Save Video
                             dragAmount.x < -horizontalThreshold -> {
-                                saveCurrentVideo(context, videoList[currentVideoIndex])
+                                val currentVideoUri = videoList[currentVideoIndex]
+                                val fileName = currentVideoUri.toString().substringAfterLast("/")
+                                markVideoAsSaved(context, fileName)
                                 dragState = DragState.IDLE
                             }
                             // Scroll Right → Placeholder
@@ -152,62 +157,24 @@ fun VideoPlayerScreen(context: Context) {
     }
 }
 
-// Save video to internal storage
-fun saveCurrentVideo(context: Context, uri: Uri) {
-    val currentVideoPath = uri.path?.substringAfterLast("/")
-    if (currentVideoPath != null) {
-        val tempFile = File(context.cacheDir, currentVideoPath)
-        copyVideoToInternalStorage(context, "Scrollable/$currentVideoPath", tempFile)
-        copyVideoToSaved(context, tempFile, "Saved/$currentVideoPath")
-        tempFile.delete()
-    }
-}
-
 
 fun getRandomVideoFromAssets(context: Context): String? {
-    val folderName = "Scrollable"
+    val folderName = "videos" // Updated to use the unified folder
 
     return try {
-        val files = context.assets.list(folderName)?.filter { it.endsWith(".mp4") }
-        files?.randomOrNull()?.let { "$folderName/$it" }
+        // Get all MP4 files from the videos folder
+        val files = context.assets.list(folderName)
+            ?.filter { it.endsWith(".mp4", ignoreCase = true) }
+            ?.map { "$folderName/$it" }
+
+        // Return random video or null if no videos exist
+        files?.randomOrNull()
     } catch (e: Exception) {
+        Log.e("VideoLoader", "Error loading videos from assets", e)
         null
     }
 }
 
 enum class DragState {
     IDLE, DRAGGING
-}
-
-fun copyVideoToInternalStorage(context: Context, sourcePath: String, destinationFile: File) {
-    try {
-        val inputStream: InputStream = context.assets.open(sourcePath)
-        val outputStream = FileOutputStream(destinationFile)
-
-        inputStream.use { input ->
-            outputStream.use { output ->
-                input.copyTo(output)
-            }
-        }
-    } catch (e: IOException) {
-        e.printStackTrace()
-    }
-}
-
-fun copyVideoToSaved(context: Context, sourceFile: File, destinationPath: String) {
-    try {
-        val outputFile = File(context.filesDir, destinationPath)
-        outputFile.parentFile?.mkdirs()
-
-        val inputStream = FileInputStream(sourceFile)
-        val outputStream = FileOutputStream(outputFile)
-
-        inputStream.use { input ->
-            outputStream.use { output ->
-                input.copyTo(output)
-            }
-        }
-    } catch (e: IOException) {
-        e.printStackTrace()
-    }
 }

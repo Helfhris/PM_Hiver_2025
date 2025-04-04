@@ -18,16 +18,25 @@ import com.example.dansr.R
 import android.content.Context
 import android.graphics.Bitmap
 import android.media.MediaMetadataRetriever
+import android.media.MediaMetadataRetriever.METADATA_KEY_VIDEO_HEIGHT
+import android.media.MediaMetadataRetriever.METADATA_KEY_VIDEO_WIDTH
 import android.net.Uri
 import android.util.Log
+import android.util.LruCache
+import android.widget.Toast
 import androidx.annotation.OptIn
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Add
 import androidx.compose.material.icons.outlined.Close
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Button
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.media3.common.MediaItem
@@ -36,6 +45,15 @@ import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import androidx.media3.ui.AspectRatioFrameLayout
 import androidx.media3.ui.PlayerView
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+
+object ThumbnailCache {
+    private val cache = LruCache<String, Bitmap>(20) // Keep 20 thumbnails in memory
+
+    fun getThumbnail(path: String): Bitmap? = cache.get(path)
+    fun putThumbnail(path: String, bitmap: Bitmap) = cache.put(path, bitmap)
+}
 
 @Composable
 fun GalleryPagerScreen(currentScreen: DansRScreen, navController: NavController) {
@@ -62,58 +80,82 @@ fun GalleryPagerScreen(currentScreen: DansRScreen, navController: NavController)
     }
 }
 
+@OptIn(UnstableApi::class)
 @Composable
 fun GalleryScreenContent(screen: DansRScreen, navController: NavController) {
     val context = LocalContext.current
-    val videoFiles = remember { getVideoFilesFromAssets(context, screen) }
-
-    var selectedVideo by remember { mutableStateOf<String?>(null) } // Vidéo en cours de lecture
+    val videoFiles by remember { mutableStateOf(getVideoFilesFromAssets(context, screen)) }
+    var selectedVideo by remember { mutableStateOf<String?>(null) }
+    var videoDimensions by remember { mutableStateOf<Pair<Int, Int>?>(null) }
     var learningVideo by remember { mutableStateOf<String?>(null) } // Vidéo sélectionnée pour l'apprentissage
 
     val columns = 3
     val rows = videoFiles.chunked(columns.coerceAtLeast(1)) // Groupement en lignes
+    LaunchedEffect(selectedVideo) {
+        selectedVideo?.let { path ->
+            videoDimensions = withContext(Dispatchers.IO) {
+                getVideoDimensions(context, path)
+            }
+        }
+    }
 
     Box(modifier = Modifier.fillMaxSize()) {
-        LazyColumn(
+        // Grid of thumbnails
+        LazyVerticalGrid(
+            columns = GridCells.Adaptive(120.dp),
             modifier = Modifier.fillMaxSize(),
             contentPadding = PaddingValues(8.dp)
         ) {
-            items(rows) { row ->
-                LazyRow(horizontalArrangement = Arrangement.Start) {
-                    items(row) { videoFile ->
-                        VideoThumbnail(videoPath = videoFile) {
-                            selectedVideo = videoFile // Ouvrir la vidéo au clic
-                        }
-                    }
+            items(videoFiles) { videoPath ->
+                AsyncVideoThumbnail(videoPath = videoPath) {
+                    selectedVideo = videoPath // Set the selected video when clicked
                 }
             }
         }
 
-        // Overlay lorsque la vidéo est en cours de lecture
+        // Fullscreen video player overlay
         selectedVideo?.let { videoPath ->
-            val exoPlayer = remember { createExoPlayerWithAssets(context, videoPath) }
-            var isPlaying by remember { mutableStateOf(true) }
+            val exoPlayer = remember {
+                ExoPlayer.Builder(context)
+                    .setMediaSourceFactory(DefaultMediaSourceFactory(context))
+                    .build()
+                    .apply {
+                        val assetUri = Uri.parse("asset:///$videoPath")
+                        setMediaItem(MediaItem.fromUri(assetUri))
+                        prepare()
+                        playWhenReady = true
+                    }
+            }
+
+            DisposableEffect(exoPlayer) {
+                onDispose { exoPlayer.release() }
+            }
 
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(androidx.compose.ui.graphics.Color.Black.copy(alpha = 0.8f))
+                    .background(Color.Black)
             ) {
                 AndroidView(
                     factory = { ctx ->
                         PlayerView(ctx).apply {
                             player = exoPlayer
-                            useController = false
+                            useController = true
+                            resizeMode = AspectRatioFrameLayout.RESIZE_MODE_FILL
                         }
                     },
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(32.dp)
+                        .then(
+                            if (videoDimensions?.let { it.first < it.second } == true) {
+                                // Vertical video - use full height
+                                Modifier.fillMaxHeight()
+                            } else {
+                                // Horizontal video - standard aspect ratio
+                                Modifier.aspectRatio(16f / 9f)
+                            }
+                        )
                         .align(Alignment.Center)
-                        .clickable {
-                            isPlaying = !isPlaying
-                            exoPlayer.playWhenReady = isPlaying
-                        }
                 )
 
                 // Bouton "Apprendre cette danse"
@@ -133,107 +175,116 @@ fun GalleryScreenContent(screen: DansRScreen, navController: NavController) {
                     Text("Apprendre cette danse")
                 }
 
-                // Bouton de fermeture
-                androidx.compose.material3.Icon(
+                // Close button
+                Icon(
                     imageVector = Icons.Outlined.Close,
-                    contentDescription = "Fermer la vidéo",
-                    tint = androidx.compose.ui.graphics.Color.White,
+                    contentDescription = "Close video",
+                    tint = Color.White,
                     modifier = Modifier
                         .padding(16.dp)
                         .size(32.dp)
                         .align(Alignment.TopStart)
-                        .clickable {
-                            exoPlayer.release()
-                            selectedVideo = null
-                        }
+                        .clickable { selectedVideo = null }
                 )
             }
         }
     }
 }
 
-
-
-
-
-@OptIn(UnstableApi::class)
 @Composable
-fun VideoPlayerFromAssets(videoPath: String, modifier: Modifier = Modifier) {
+fun AsyncVideoThumbnail(videoPath: String, onClick: () -> Unit) {
     val context = LocalContext.current
-    val exoPlayer = remember { createExoPlayerWithAssets(context, videoPath) }
+    val bitmap by produceState<Bitmap?>(null) {
+        value = ThumbnailCache.getThumbnail(videoPath) ?:
+                withContext(Dispatchers.IO) {
+                    extractVideoThumbnail(context, videoPath)?.also {
+                        ThumbnailCache.putThumbnail(videoPath, it)
+                    }
+                }
+    }
 
-    AndroidView(
-        factory = {
-            PlayerView(it).apply {
-                player = exoPlayer
-                resizeMode = AspectRatioFrameLayout.RESIZE_MODE_ZOOM // Crops to fit
-            }
-        },
+    Box(
         modifier = Modifier
-    )
-
-    DisposableEffect(Unit) {
-        onDispose { exoPlayer.release() }
+            .size(120.dp)
+            .padding(4.dp)
+            .clickable(onClick = onClick)
+    ) {
+        if (bitmap != null) {
+            Image(
+                bitmap = bitmap!!.asImageBitmap(),
+                contentDescription = "Video thumbnail",
+                modifier = Modifier.fillMaxSize()
+            )
+        } else {
+            PlaceholderThumbnail()
+        }
     }
 }
 
-
 @Composable
-fun VideoThumbnail(videoPath: String, onClick: () -> Unit) {
-    val context = LocalContext.current
-    val thumbnailBitmap = remember { extractVideoThumbnail(context, videoPath) }
-
-    thumbnailBitmap?.let {
-        Image(
-            bitmap = it.asImageBitmap(),
-            contentDescription = "Video Thumbnail",
-            modifier = Modifier
-                .size(120.dp)
-                .padding(4.dp)
-                .clickable { onClick() } // Click to play video
-        )
-    }
+fun PlaceholderThumbnail() {
+    Box(
+        modifier = Modifier
+            .size(120.dp)
+            .padding(4.dp)
+            .background(Color.Gray.copy(alpha = 0.2f))
+    )
 }
 
 fun extractVideoThumbnail(context: Context, filePath: String): Bitmap? {
+    val retriever = MediaMetadataRetriever()
     return try {
-        val retriever = MediaMetadataRetriever()
-        val assetFileDescriptor = context.assets.openFd(filePath)
-        retriever.setDataSource(assetFileDescriptor.fileDescriptor, assetFileDescriptor.startOffset, assetFileDescriptor.length)
-        val bitmap = retriever.getFrameAtTime(0) // First frame
-        retriever.release()
-        bitmap
+        context.assets.openFd(filePath).use { fd ->
+            retriever.setDataSource(
+                fd.fileDescriptor,
+                fd.startOffset,
+                fd.length
+            )
+            retriever.frameAtTime?.also { original ->
+                // Scale down for thumbnails
+                val maxSize = 240
+                val scale = maxSize.toFloat() / maxOf(original.width, original.height)
+                Bitmap.createScaledBitmap(
+                    original,
+                    (original.width * scale).toInt(),
+                    (original.height * scale).toInt(),
+                    true
+                )
+            }
+        }
     } catch (e: Exception) {
-        Log.e("ThumbnailError", "Failed to load thumbnail: ${e.message}")
+        Log.e("Thumbnail", "Error loading $filePath", e)
         null
+    } finally {
+        retriever.release()
     }
-}
-
-
-fun createExoPlayerWithAssets(context: Context, filePath: String): ExoPlayer {
-    val exoPlayer = ExoPlayer.Builder(context).build()
-
-    val assetUri = Uri.parse("asset:///$filePath") // Works with subdirectories
-
-    val mediaItem = MediaItem.fromUri(assetUri)
-    exoPlayer.setMediaItem(mediaItem)
-    exoPlayer.prepare()
-    exoPlayer.playWhenReady = true
-
-    return exoPlayer
 }
 
 fun getVideoFilesFromAssets(context: Context, screen: DansRScreen): List<String> {
-    val folderName = when (screen) {
-        DansRScreen.Likes -> "Likes"
-        DansRScreen.Saved -> "Saved"
-        DansRScreen.Uploaded -> "Uploaded"
-        else -> ""
-    }
+    val statuses = loadVideoStatuses(context)
+    val allVideos = context.assets.list("videos")?.filter { it.endsWith(".mp4") } ?: emptyList()
 
+    return allVideos.filter { video ->
+        val status = statuses.find { it.fileName == video }
+        when (screen) {
+            DansRScreen.Likes -> status?.isLiked == true
+            DansRScreen.Saved -> status?.isSaved == true
+            DansRScreen.Uploaded -> status?.isUploaded == true
+            else -> false
+        }
+    }.map { "videos/$it" } // Return full path
+}
+
+suspend fun getVideoDimensions(context: Context, videoPath: String): Pair<Int, Int> {
+    val retriever = MediaMetadataRetriever()
     return try {
-        context.assets.list(folderName)?.filter { it.endsWith(".mp4") }?.map { "$folderName/$it" } ?: emptyList()
-    } catch (e: Exception) {
-        emptyList()
+        context.assets.openFd(videoPath).use { fd ->
+            retriever.setDataSource(fd.fileDescriptor, fd.startOffset, fd.length)
+            val width = retriever.extractMetadata(METADATA_KEY_VIDEO_WIDTH)?.toInt() ?: 0
+            val height = retriever.extractMetadata(METADATA_KEY_VIDEO_HEIGHT)?.toInt() ?: 0
+            width to height
+        }
+    } finally {
+        retriever.release()
     }
 }

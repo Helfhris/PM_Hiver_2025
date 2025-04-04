@@ -61,6 +61,7 @@ dependencies {
     implementation(libs.androidx.media)
     implementation(libs.androidx.media)
     implementation(libs.androidx.media)
+    implementation(libs.gson)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
