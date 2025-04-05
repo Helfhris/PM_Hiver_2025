@@ -20,11 +20,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.media3.ui.PlayerView
 import androidx.navigation.NavController
-import createExoPlayerWithAssets
 import androidx.compose.material3.MaterialTheme
 import androidx.core.content.FileProvider
-import androidx.media3.common.Player
 import java.io.File
+import createExoPlayerWithAssets
 
 @Composable
 fun LearningScreen(videoPath: String, navController: NavController) {
@@ -120,6 +119,7 @@ fun VideoWithControls(videoPath: String, onStart: () -> Unit) {
         onDispose { exoPlayer.release() }
     }
 }
+
 
 
 @Composable

@@ -11,6 +11,7 @@
     <string name="upload_gallery">From your gallery</string>">
     <string name="upload_camera">From your camera</string>">
 
+    <string name="gallery_icon">Gallery pages icon</string>
     <string name="start_icon">Home page icon</string>
     <string name="upload_icon">Upload page icon</string>
     <string name="likes_icon">Likes page icon</string>
