@@ -1,3 +1,4 @@
+import android.content.Context
 import android.net.Uri
 import android.widget.Toast
 import android.widget.VideoView
@@ -23,6 +24,8 @@ import androidx.navigation.NavController
 import createExoPlayerWithAssets
 import androidx.compose.material3.MaterialTheme
 import androidx.core.content.FileProvider
+import androidx.media3.common.MediaItem
+import androidx.media3.exoplayer.ExoPlayer
 import java.io.File
 
 @Composable
@@ -197,3 +200,15 @@ fun CompareDanceVideos(
     }
 }
 
+fun createExoPlayerWithAssets(context: Context, filePath: String): ExoPlayer {
+    val exoPlayer = ExoPlayer.Builder(context).build()
+
+    val assetUri = Uri.parse("asset:///$filePath") // Works with subdirectories
+
+    val mediaItem = MediaItem.fromUri(assetUri)
+    exoPlayer.setMediaItem(mediaItem)
+    exoPlayer.prepare()
+    exoPlayer.playWhenReady = true
+
+    return exoPlayer
+}

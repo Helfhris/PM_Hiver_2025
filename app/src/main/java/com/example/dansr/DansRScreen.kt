@@ -277,9 +277,6 @@ fun DansRApp(
             modifier = Modifier.padding(innerPadding)
         ) {
             composable(route = DansRScreen.Start.name) {
-                /*HomeScreen(
-                    onNavigate = { screen -> navController.navigate(screen.name) }
-                )*/
                 VideoPlayerScreen(context = LocalContext.current, navController = navController)
             }
             composable(route = DansRScreen.Likes.name) {

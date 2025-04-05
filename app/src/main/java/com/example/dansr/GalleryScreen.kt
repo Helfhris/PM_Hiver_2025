@@ -275,7 +275,7 @@ fun getVideoFilesFromAssets(context: Context, screen: DansRScreen): List<String>
     }.map { "videos/$it" } // Return full path
 }
 
-suspend fun getVideoDimensions(context: Context, videoPath: String): Pair<Int, Int> {
+fun getVideoDimensions(context: Context, videoPath: String): Pair<Int, Int> {
     val retriever = MediaMetadataRetriever()
     return try {
         context.assets.openFd(videoPath).use { fd ->
