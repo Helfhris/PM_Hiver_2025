@@ -23,6 +23,7 @@ import androidx.navigation.NavController
 import createExoPlayerWithAssets
 import androidx.compose.material3.MaterialTheme
 import androidx.core.content.FileProvider
+import androidx.media3.common.Player
 import java.io.File
 
 @Composable
@@ -152,42 +153,140 @@ fun LaunchCameraForRecording(
 
 
 @Composable
-fun CompareDanceVideos(
-    modelVideoPath: String,
-    userVideoUri: Uri
-) {
+fun CompareDanceVideos(modelVideoPath: String, userVideoUri: Uri) {
     val context = LocalContext.current
     val modelPlayer = remember { createExoPlayerWithAssets(context, modelVideoPath) }
+    val videoViewRef = remember { mutableStateOf<VideoView?>(null) }
 
-    Column(modifier = Modifier.fillMaxSize()) {
-        // Vidéo du modèle
-        AndroidView(
-            factory = { ctx ->
-                PlayerView(ctx).apply {
-                    player = modelPlayer
-                    useController = false
-                }
-            },
-            modifier = Modifier
-                .fillMaxWidth()
-                .weight(1f) // moitié de l’écran
-                .padding(8.dp)
-        )
+    var resyncTrigger by remember { mutableStateOf(false) }
+    var isModelFinished by remember { mutableStateOf(false) }
 
-        // Vidéo de l'utilisateur
-        AndroidView(
-            factory = { ctx ->
-                VideoView(ctx).apply {
-                    setVideoURI(userVideoUri)
-                    setOnPreparedListener { it.isLooping = true }
-                    start()
+    // Observateur de fin de la vidéo modèle
+    LaunchedEffect(Unit) {
+        modelPlayer.addListener(object : Player.Listener {
+            override fun onPlaybackStateChanged(state: Int) {
+                if (state == Player.STATE_ENDED) {
+                    // La vidéo modèle est terminée, on déclenche la synchronisation
+                    isModelFinished = true
+                    resyncTrigger = true
                 }
-            },
+            }
+        })
+    }
+
+    // Observateur de fin de la vidéo utilisateur
+    LaunchedEffect(Unit) {
+        videoViewRef.value?.setOnCompletionListener {
+            if (!isModelFinished) {
+                // Si la vidéo de l'utilisateur finit avant la vidéo modèle, on laisse la vidéo modèle se finir
+                return@setOnCompletionListener
+            }
+        }
+    }
+
+    Row(modifier = Modifier.fillMaxSize()) {
+        // Bouton "Recommencer" (gauche - 15%)
+        Column(
             modifier = Modifier
-                .fillMaxWidth()
-                .weight(1f) // moitié de l’écran
-                .padding(8.dp)
-        )
+                .weight(0.15f)
+                .fillMaxHeight(), // Retirer le padding pour toute la hauteur
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Button(
+                onClick = {
+                    modelPlayer.seekTo(0)
+                    videoViewRef.value?.seekTo(0)
+                    modelPlayer.playWhenReady = true
+                    videoViewRef.value?.start()
+                },
+                modifier = Modifier.fillMaxHeight(), // Prendre toute la hauteur de la colonne
+                colors = ButtonDefaults.buttonColors(containerColor = Color.Red) // Couleur de fond rouge
+            ) {
+                Text(text = "Recommencer", color = Color.White)
+            }
+        }
+
+        // Vidéos au centre (70%)
+        Column(
+            modifier = Modifier
+                .weight(0.7f)
+                .fillMaxHeight()
+        ) {
+            // Vidéo du modèle
+            AndroidView(
+                factory = { ctx ->
+                    PlayerView(ctx).apply {
+                        player = modelPlayer
+                        useController = false
+                    }
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1f)
+            )
+
+            // Vidéo de l'utilisateur
+            AndroidView(
+                factory = { ctx ->
+                    VideoView(ctx).apply {
+                        setVideoURI(userVideoUri)
+                        setOnPreparedListener { mp ->
+                            mp.setOnCompletionListener {
+                                // Si la vidéo de l'utilisateur finit avant la vidéo modèle, on attend la fin du modèle
+                                if (!isModelFinished) {
+                                    return@setOnCompletionListener
+                                }
+                                resyncTrigger = true
+                            }
+                            mp.isLooping = false
+                            start()
+                        }
+                        videoViewRef.value = this
+                    }
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1f)
+            )
+        }
+
+        // Bouton "Publier" (droite - 15%)
+        Column(
+            modifier = Modifier
+                .weight(0.15f)
+                .fillMaxHeight(), // Retirer le padding pour toute la hauteur
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Button(
+                onClick = {
+                    // Navigation vers l'écran de publication
+                },
+                modifier = Modifier.fillMaxHeight(), // Prendre toute la hauteur de la colonne
+                colors = ButtonDefaults.buttonColors(containerColor = Color.Green) // Couleur de fond verte
+            ) {
+                Text(text = "Publier", color = Color.White)
+            }
+        }
+    }
+
+    // 🔄 Resync quand la vidéo modèle se termine
+    LaunchedEffect(resyncTrigger) {
+        if (resyncTrigger) {
+            // Remettre les deux vidéos au début
+            modelPlayer.seekTo(0)
+            videoViewRef.value?.seekTo(0)
+
+            // Petite pause pour synchroniser
+            kotlinx.coroutines.delay(200)
+
+            // Démarrer les deux vidéos en même temps
+            modelPlayer.playWhenReady = true
+            videoViewRef.value?.start()
+
+            resyncTrigger = false
+        }
     }
 
     DisposableEffect(Unit) {
