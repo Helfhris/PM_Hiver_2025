@@ -1,3 +1,9 @@
+import android.net.Uri
+import android.widget.Toast
+import android.widget.VideoView
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Pause
@@ -16,83 +22,95 @@ import androidx.media3.ui.PlayerView
 import androidx.navigation.NavController
 import createExoPlayerWithAssets
 import androidx.compose.material3.MaterialTheme
+import androidx.core.content.FileProvider
+import java.io.File
 
 @Composable
 fun LearningScreen(videoPath: String, navController: NavController) {
+    var isRecording by remember { mutableStateOf(false) }
+    var userVideoUri by remember { mutableStateOf<Uri?>(null) }
+
+    when {
+        userVideoUri != null -> {
+            // Afficher les deux vidéos côte à côte
+            CompareDanceVideos(videoPath, userVideoUri!!)
+        }
+        isRecording -> {
+            // Lancer l'enregistrement
+            LaunchCameraForRecording { uri ->
+                userVideoUri = uri
+                isRecording = false
+            }
+        }
+        else -> {
+            // Affichage normal avec les boutons
+            VideoWithControls(
+                videoPath = videoPath,
+                onStart = { isRecording = true }
+            )
+        }
+    }
+}
+
+@Composable
+fun VideoWithControls(videoPath: String, onStart: () -> Unit) {
     val context = LocalContext.current
     val exoPlayer = remember { createExoPlayerWithAssets(context, videoPath) }
     var isPlaying by remember { mutableStateOf(true) }
 
     Column(modifier = Modifier.fillMaxSize()) {
-        // Vidéo affichée en haut
         AndroidView(
-            factory = { ctx ->
-                PlayerView(ctx).apply {
-                    player = exoPlayer
-                    useController = false // Désactiver les contrôles natifs
-                }
-            },
+            factory = { ctx -> PlayerView(ctx).apply {
+                player = exoPlayer
+                useController = false
+            }},
             modifier = Modifier
                 .fillMaxWidth()
-                .weight(1f) // Occupe l'espace disponible
+                .weight(1f)
         )
 
-        // Boutons de contrôle de la vidéo
         Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(16.dp),
             horizontalArrangement = Arrangement.SpaceEvenly
         ) {
-            // Bouton Pause / Reprendre
-            Button(
+            IconButton(
                 onClick = {
                     isPlaying = !isPlaying
                     exoPlayer.playWhenReady = isPlaying
                 },
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = if (isPlaying) Color.Red else Color.Green
-                )
+                modifier = Modifier
+                    .background(if (isPlaying) Color.Red else Color.Green)
+                    .padding(8.dp)
             ) {
                 Icon(
-                    imageVector = if (isPlaying) Icons.Filled.Pause else Icons.Filled.PlayArrow,
-                    contentDescription = if (isPlaying) "Pause" else "Reprendre",
-                    tint = Color.Black,
-                    modifier = Modifier.size(32.dp)
-                )
-            }
-
-            // Bouton Restart
-            Button(
-                onClick = {
-                    exoPlayer.seekTo(0) // Recommencer depuis le début
-                    exoPlayer.playWhenReady = true
-                    isPlaying = true
-                },
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFFA500))
-            ) {
-                Icon(
-                    imageVector = Icons.Filled.Replay,
-                    contentDescription = "Recommencer",
-                    tint = Color.Black,
-                    modifier = Modifier.size(32.dp)
-                )
-            }
-
-            // Bouton Drapeau (Start)
-            Button(
-                onClick = {
-                    exoPlayer.pause() // Mettre la vidéo en pause
-                    navController.navigate("CameraScreen") // Aller à l'écran de la caméra
-                },
-                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.tertiaryContainer)
-            ) {
-                Icon(
-                    imageVector = Icons.Filled.Flag,
-                    contentDescription = "Drapeau",
+                    imageVector = if (isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
+                    contentDescription = null,
                     tint = Color.White,
                     modifier = Modifier.size(32.dp)
                 )
+            }
+
+            IconButton(
+                onClick = {
+                    exoPlayer.seekTo(0)
+                    exoPlayer.playWhenReady = true
+                    isPlaying = true
+                },
+                modifier = Modifier.background(Color(0xFFFFA500)).padding(8.dp)
+            ) {
+                Icon(Icons.Default.Replay, contentDescription = null, tint = Color.White, modifier = Modifier.size(32.dp))
+            }
+
+            IconButton(
+                onClick = {
+                    exoPlayer.pause()
+                    onStart()
+                },
+                modifier = Modifier.background(Color(0xFF9C27B0)).padding(8.dp)
+            ) {
+                Icon(Icons.Default.Flag, contentDescription = "Start", tint = Color.White, modifier = Modifier.size(32.dp))
             }
         }
     }
@@ -101,3 +119,81 @@ fun LearningScreen(videoPath: String, navController: NavController) {
         onDispose { exoPlayer.release() }
     }
 }
+
+
+@Composable
+fun LaunchCameraForRecording(
+    onVideoRecorded: (Uri) -> Unit
+) {
+    val context = LocalContext.current
+    val videoFile = remember {
+        val cacheDir = context.externalCacheDir ?: context.cacheDir
+        File(cacheDir, "user_dance_${System.currentTimeMillis()}.mp4")
+    }
+    val videoUri = remember {
+        FileProvider.getUriForFile(context, "${context.packageName}.provider", videoFile)
+    }
+
+    val captureLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.CaptureVideo()
+    ) { success ->
+        if (success) {
+            onVideoRecorded(videoUri)
+        } else {
+            Toast.makeText(context, "L'enregistrement a échoué", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    // Appel direct au launcher
+    LaunchedEffect(Unit) {
+        captureLauncher.launch(videoUri)
+    }
+}
+
+
+@Composable
+fun CompareDanceVideos(
+    modelVideoPath: String,
+    userVideoUri: Uri
+) {
+    val context = LocalContext.current
+    val modelPlayer = remember { createExoPlayerWithAssets(context, modelVideoPath) }
+
+    Column(modifier = Modifier.fillMaxSize()) {
+        // Vidéo du modèle
+        AndroidView(
+            factory = { ctx ->
+                PlayerView(ctx).apply {
+                    player = modelPlayer
+                    useController = false
+                }
+            },
+            modifier = Modifier
+                .fillMaxWidth()
+                .weight(1f) // moitié de l’écran
+                .padding(8.dp)
+        )
+
+        // Vidéo de l'utilisateur
+        AndroidView(
+            factory = { ctx ->
+                VideoView(ctx).apply {
+                    setVideoURI(userVideoUri)
+                    setOnPreparedListener { it.isLooping = true }
+                    start()
+                }
+            },
+            modifier = Modifier
+                .fillMaxWidth()
+                .weight(1f) // moitié de l’écran
+                .padding(8.dp)
+        )
+    }
+
+    DisposableEffect(Unit) {
+        onDispose {
+            modelPlayer.release()
+        }
+    }
+}
+
