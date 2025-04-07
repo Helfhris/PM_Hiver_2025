@@ -5,6 +5,7 @@ import android.widget.VideoView
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Pause
@@ -23,8 +24,10 @@ import androidx.media3.ui.PlayerView
 import androidx.navigation.NavController
 import createExoPlayerWithAssets
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.core.content.FileProvider
 import androidx.media3.common.MediaItem
+import androidx.media3.common.Player
 import androidx.media3.exoplayer.ExoPlayer
 import java.io.File
 
@@ -160,45 +163,136 @@ fun CompareDanceVideos(
     userVideoUri: Uri
 ) {
     val context = LocalContext.current
-    val modelPlayer = remember { createExoPlayerWithAssets(context, modelVideoPath) }
+    var isSwapped by remember { mutableStateOf(false) }
 
-    Column(modifier = Modifier.fillMaxSize()) {
-        // Vidéo du modèle
-        AndroidView(
-            factory = { ctx ->
-                PlayerView(ctx).apply {
-                    player = modelPlayer
-                    useController = false
-                }
-            },
-            modifier = Modifier
-                .fillMaxWidth()
-                .weight(1f) // moitié de l’écran
-                .padding(8.dp)
-        )
-
-        // Vidéo de l'utilisateur
-        AndroidView(
-            factory = { ctx ->
-                VideoView(ctx).apply {
-                    setVideoURI(userVideoUri)
-                    setOnPreparedListener { it.isLooping = true }
-                    start()
-                }
-            },
-            modifier = Modifier
-                .fillMaxWidth()
-                .weight(1f) // moitié de l’écran
-                .padding(8.dp)
-        )
+    // ExoPlayer du modèle (depuis les assets)
+    val modelPlayer = remember {
+        ExoPlayer.Builder(context).build().apply {
+            val assetUri = Uri.parse("asset:///$modelVideoPath")
+            setMediaItem(MediaItem.fromUri(assetUri))
+            prepare()
+            playWhenReady = true
+        }
     }
 
+    // ExoPlayer de l'utilisateur (depuis Uri)
+    val userPlayer = remember {
+        ExoPlayer.Builder(context).build().apply {
+            setMediaItem(MediaItem.fromUri(userVideoUri))
+            prepare()
+            playWhenReady = true
+        }
+    }
+
+    // Gestion de la synchro
     DisposableEffect(Unit) {
+        val listener = object : Player.Listener {
+            override fun onPlaybackStateChanged(state: Int) {
+                if (state == Player.STATE_ENDED) {
+                    modelPlayer.seekTo(0)
+                    modelPlayer.playWhenReady = true
+
+                    userPlayer.seekTo(0)
+                    userPlayer.playWhenReady = true
+                }
+            }
+        }
+
+        modelPlayer.addListener(listener)
+
         onDispose {
+            modelPlayer.removeListener(listener)
             modelPlayer.release()
+            userPlayer.release()
+        }
+    }
+
+    // Affichage
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .pointerInput(Unit) {
+                detectTapGestures(
+                    onDoubleTap = {
+                        // Inverser l'état lors d'un double tap
+                        isSwapped = !isSwapped
+
+                        // Recommencer les vidéos à 0 en même temps
+                        modelPlayer.seekTo(0)
+                        modelPlayer.playWhenReady = true
+
+                        userPlayer.seekTo(0)
+                        userPlayer.playWhenReady = true
+                    }
+                )
+            }
+    ) {
+        // Vidéo modèle plein écran (affichée en fonction de l'état)
+        if (!isSwapped) {
+            AndroidView(
+                factory = { ctx ->
+                    PlayerView(ctx).apply {
+                        player = modelPlayer
+                        useController = false
+                    }
+                },
+                modifier = Modifier.fillMaxSize()
+            )
+
+            // Vidéo utilisateur (overlay en haut à droite)
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.TopEnd
+            ) {
+                AndroidView(
+                    factory = { ctx ->
+                        PlayerView(ctx).apply {
+                            player = userPlayer
+                            useController = false
+                        }
+                    },
+                    modifier = Modifier
+                        .size(width = 200.dp, height = 300.dp)
+                        .padding(top = 20.dp)
+                )
+            }
+        } else {
+            // Vidéo utilisateur plein écran (affichée en fonction de l'état)
+            AndroidView(
+                factory = { ctx ->
+                    PlayerView(ctx).apply {
+                        player = userPlayer
+                        useController = false
+                    }
+                },
+                modifier = Modifier.fillMaxSize()
+            )
+
+            // Vidéo modèle (overlay en haut à droite)
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.TopEnd
+            ) {
+                AndroidView(
+                    factory = { ctx ->
+                        PlayerView(ctx).apply {
+                            player = modelPlayer
+                            useController = false
+                        }
+                    },
+                    modifier = Modifier
+                        .size(width = 200.dp, height = 300.dp)
+                        .padding(top = 20.dp)
+                )
+            }
         }
     }
 }
+
+
+
+
+
 
 fun createExoPlayerWithAssets(context: Context, filePath: String): ExoPlayer {
     val exoPlayer = ExoPlayer.Builder(context).build()
