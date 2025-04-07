@@ -87,10 +87,10 @@ fun GalleryScreenContent(screen: DansRScreen, navController: NavController) {
     val videoFiles by remember { mutableStateOf(getVideoFilesFromAssets(context, screen)) }
     var selectedVideo by remember { mutableStateOf<String?>(null) }
     var videoDimensions by remember { mutableStateOf<Pair<Int, Int>?>(null) }
-    var learningVideo by remember { mutableStateOf<String?>(null) } // Vidéo sélectionnée pour l'apprentissage
+    var learningVideo by remember { mutableStateOf<String?>(null) } // Selected video to learn
 
     val columns = 3
-    val rows = videoFiles.chunked(columns.coerceAtLeast(1)) // Groupement en lignes
+    val rows = videoFiles.chunked(columns.coerceAtLeast(1)) // Video grouped in rows
     LaunchedEffect(selectedVideo) {
         selectedVideo?.let { path ->
             videoDimensions = withContext(Dispatchers.IO) {
@@ -141,6 +141,9 @@ fun GalleryScreenContent(screen: DansRScreen, navController: NavController) {
                         PlayerView(ctx).apply {
                             player = exoPlayer
                             useController = true
+                            setShowBuffering(PlayerView.SHOW_BUFFERING_WHEN_PLAYING)
+                            setControllerShowTimeoutMs(0) // Always show Controller
+                            setControllerAutoShow(true)
                             resizeMode = AspectRatioFrameLayout.RESIZE_MODE_FILL
                         }
                     },
@@ -148,21 +151,19 @@ fun GalleryScreenContent(screen: DansRScreen, navController: NavController) {
                         .fillMaxWidth()
                         .then(
                             if (videoDimensions?.let { it.first < it.second } == true) {
-                                // Vertical video - use full height
                                 Modifier.fillMaxHeight()
                             } else {
-                                // Horizontal video - standard aspect ratio
                                 Modifier.aspectRatio(16f / 9f)
                             }
                         )
                         .align(Alignment.Center)
                 )
 
-                // Bouton "Apprendre cette danse"
+                // Button "Learn this Dance"
                 Button(
                     onClick = {
-                        learningVideo = videoPath // Marquer la vidéo pour l'apprentissage
-                        selectedVideo = null      // Fermer la lecture
+                        learningVideo = videoPath // Put Video as to be Learned
+                        selectedVideo = null      // Close Playing
                         exoPlayer.release()
                         navController.currentBackStackEntry?.savedStateHandle?.set("videoPath", videoPath)
                         navController.navigate("LearningScreen")
@@ -172,7 +173,7 @@ fun GalleryScreenContent(screen: DansRScreen, navController: NavController) {
                         .align(Alignment.BottomCenter)
                         .padding(16.dp)
                 ) {
-                    Text("Apprendre cette danse")
+                    Text("Learn this Dance")
                 }
 
                 // Close button
