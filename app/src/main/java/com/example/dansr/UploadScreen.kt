@@ -20,6 +20,7 @@ import android.widget.VideoView
 import androidx.compose.ui.res.stringResource
 import androidx.navigation.NavController
 import java.io.File
+import publishUserVideo
 
 @Composable
 fun VideoCaptureScreen(navController: NavController) {
@@ -72,7 +73,16 @@ fun VideoCaptureScreen(navController: NavController) {
                     horizontalArrangement = Arrangement.SpaceEvenly
                 ) {
                     Button(onClick = { videoUri = null }) { Text(text = stringResource(id = R.string.upload_retry)) }
-                    Button(onClick = { navController.navigate(DansRScreen.Start.name) }) { Text(text = stringResource(id = R.string.upload_publish)) }
+                    Button(onClick = {
+                        videoUri?.let { uri ->
+                            publishUserVideo(context, uri)
+
+                            navController.navigate(DansRScreen.Start.name)
+                        }
+                    }) {
+                        Text(text = stringResource(id = R.string.upload_publish))
+                    }
+
                 }
             }
         }
