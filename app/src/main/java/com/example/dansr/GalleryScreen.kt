@@ -172,7 +172,6 @@ fun GalleryScreenContent(screen: DansRScreen, navController: NavController) {
                         exoPlayer.release()
                         navController.currentBackStackEntry?.savedStateHandle?.set("videoPath", videoPath)
                         navController.navigate("LearningScreen")
-
                     },
                     modifier = Modifier
                         .align(Alignment.BottomCenter)
