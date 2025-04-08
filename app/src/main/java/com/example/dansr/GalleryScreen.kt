@@ -47,6 +47,7 @@ import androidx.media3.ui.AspectRatioFrameLayout
 import androidx.media3.ui.PlayerView
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import java.io.File
 
 object ThumbnailCache {
     private val cache = LruCache<String, Bitmap>(20) // Keep 20 thumbnails in memory
@@ -84,7 +85,7 @@ fun GalleryPagerScreen(currentScreen: DansRScreen, navController: NavController)
 @Composable
 fun GalleryScreenContent(screen: DansRScreen, navController: NavController) {
     val context = LocalContext.current
-    val videoFiles by remember { mutableStateOf(getVideoFilesFromAssets(context, screen)) }
+    val videoFiles by remember { mutableStateOf(getAllVideoFiles(context, screen)) }
     var selectedVideo by remember { mutableStateOf<String?>(null) }
     var videoDimensions by remember { mutableStateOf<Pair<Int, Int>?>(null) }
     var learningVideo by remember { mutableStateOf<String?>(null) } // Selected video to learn
@@ -120,8 +121,12 @@ fun GalleryScreenContent(screen: DansRScreen, navController: NavController) {
                     .setMediaSourceFactory(DefaultMediaSourceFactory(context))
                     .build()
                     .apply {
-                        val assetUri = Uri.parse("asset:///$videoPath")
-                        setMediaItem(MediaItem.fromUri(assetUri))
+                        val uri = if (videoPath.startsWith("videos/")) {
+                            Uri.parse("asset:///$videoPath")
+                        } else {
+                            Uri.fromFile(File(videoPath))
+                        }
+                        setMediaItem(MediaItem.fromUri(uri))
                         prepare()
                         playWhenReady = true
                     }
@@ -235,23 +240,23 @@ fun PlaceholderThumbnail() {
 fun extractVideoThumbnail(context: Context, filePath: String): Bitmap? {
     val retriever = MediaMetadataRetriever()
     return try {
-        context.assets.openFd(filePath).use { fd ->
-            retriever.setDataSource(
-                fd.fileDescriptor,
-                fd.startOffset,
-                fd.length
-            )
-            retriever.frameAtTime?.also { original ->
-                // Scale down for thumbnails
-                val maxSize = 240
-                val scale = maxSize.toFloat() / maxOf(original.width, original.height)
-                Bitmap.createScaledBitmap(
-                    original,
-                    (original.width * scale).toInt(),
-                    (original.height * scale).toInt(),
-                    true
-                )
+        if (filePath.startsWith("videos/")) {
+            context.assets.openFd(filePath).use { fd ->
+                retriever.setDataSource(fd.fileDescriptor, fd.startOffset, fd.length)
             }
+        } else {
+            retriever.setDataSource(filePath)
+        }
+
+        retriever.frameAtTime?.also { original ->
+            val maxSize = 240
+            val scale = maxSize.toFloat() / maxOf(original.width, original.height)
+            Bitmap.createScaledBitmap(
+                original,
+                (original.width * scale).toInt(),
+                (original.height * scale).toInt(),
+                true
+            )
         }
     } catch (e: Exception) {
         Log.e("Thumbnail", "Error loading $filePath", e)
@@ -260,6 +265,7 @@ fun extractVideoThumbnail(context: Context, filePath: String): Bitmap? {
         retriever.release()
     }
 }
+
 
 fun getVideoFilesFromAssets(context: Context, screen: DansRScreen): List<String> {
     val statuses = loadVideoStatuses(context)
@@ -276,15 +282,42 @@ fun getVideoFilesFromAssets(context: Context, screen: DansRScreen): List<String>
     }.map { "videos/$it" } // Return full path
 }
 
+fun getVideoFilesFromInternal(context: Context, screen: DansRScreen): List<String> {
+    val statuses = loadVideoStatuses(context)
+    val videoDir = context.filesDir.resolve("videos")
+    if (!videoDir.exists() || !videoDir.isDirectory) return emptyList()
+
+    return videoDir.listFiles { file -> file.extension == "mp4" }?.filter { file ->
+        val status = statuses.find { it.fileName == file.name }
+        when (screen) {
+            DansRScreen.Likes -> status?.isLiked == true
+            DansRScreen.Saved -> status?.isSaved == true
+            DansRScreen.Uploaded -> status?.isUploaded == true
+            else -> false
+        }
+    }?.map { it.absolutePath } ?: emptyList()
+}
+
+fun getAllVideoFiles(context: Context, screen: DansRScreen): List<String> {
+    val assets = getVideoFilesFromAssets(context, screen)
+    val internal = getVideoFilesFromInternal(context, screen)
+    return assets + internal
+}
+
+
 fun getVideoDimensions(context: Context, videoPath: String): Pair<Int, Int> {
     val retriever = MediaMetadataRetriever()
     return try {
-        context.assets.openFd(videoPath).use { fd ->
-            retriever.setDataSource(fd.fileDescriptor, fd.startOffset, fd.length)
-            val width = retriever.extractMetadata(METADATA_KEY_VIDEO_WIDTH)?.toInt() ?: 0
-            val height = retriever.extractMetadata(METADATA_KEY_VIDEO_HEIGHT)?.toInt() ?: 0
-            width to height
+        if (videoPath.startsWith("videos/")) {
+            context.assets.openFd(videoPath).use { fd ->
+                retriever.setDataSource(fd.fileDescriptor, fd.startOffset, fd.length)
+            }
+        } else {
+            retriever.setDataSource(videoPath)
         }
+        val width = retriever.extractMetadata(METADATA_KEY_VIDEO_WIDTH)?.toInt() ?: 0
+        val height = retriever.extractMetadata(METADATA_KEY_VIDEO_HEIGHT)?.toInt() ?: 0
+        width to height
     } finally {
         retriever.release()
     }

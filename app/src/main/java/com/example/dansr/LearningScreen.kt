@@ -344,6 +344,8 @@ fun publishUserVideo(context: Context, videoUri: Uri) {
             }
         }
 
+        Log.d("PublishVideo", "Saved at: ${destFile.absolutePath}")
+
         // Update JSON
         val statuses = loadVideoStatuses(context).toMutableList()
         val existingStatus = statuses.find { it.fileName == newFileName }
