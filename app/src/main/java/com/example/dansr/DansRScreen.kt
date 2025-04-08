@@ -24,6 +24,7 @@ import androidx.compose.material.icons.outlined.Apps
 import androidx.compose.material.icons.outlined.FavoriteBorder
 import androidx.compose.material.icons.outlined.Home
 import androidx.compose.material.icons.outlined.HourglassBottom
+import androidx.compose.material.icons.outlined.School
 import androidx.compose.material.icons.outlined.StarBorder
 import androidx.compose.material.icons.outlined.ViewCozy
 import androidx.compose.material.icons.outlined.ViewWeek
@@ -62,6 +63,7 @@ enum class DansRScreen(@StringRes val title: Int) {
     Saved(title = R.string.saved),
     Uploaded(title = R.string.uploaded),
     Upload(title = R.string.upload),
+    DanceRSS(title = R.string.resources)
 }
 
 @OptIn(ExperimentalMaterial3Api::class) //Otherwise there's a problem with the top bar for some reason
@@ -78,6 +80,7 @@ fun DansRAppBar(
         DansRScreen.Saved to Icons.Outlined.ViewWeek,
         DansRScreen.Uploaded to Icons.Outlined.ViewWeek,
         DansRScreen.Upload to Icons.Outlined.Add,
+        DansRScreen.DanceRSS to Icons.Outlined.School,
     )
     val screenIconDescriptions = mapOf(
         DansRScreen.Start to R.string.start_icon,
@@ -85,6 +88,7 @@ fun DansRAppBar(
         DansRScreen.Saved to R.string.gallery_icon,
         DansRScreen.Uploaded to R.string.gallery_icon,
         DansRScreen.Upload to R.string.upload_icon,
+        DansRScreen.DanceRSS to R.string.resources_icon,
     )
     TopAppBar(
         title = {
@@ -187,15 +191,17 @@ fun GalleryTopBar(currentScreen: DansRScreen, navController: NavHostController) 
 fun BottomBar(currentScreen: DansRScreen, navController: NavHostController) {
     val (screens, icons, iconDescriptions) =
         Triple(
-            listOf(DansRScreen.Likes, DansRScreen.Start, DansRScreen.Upload),
+            listOf(DansRScreen.Likes, DansRScreen.Start, DansRScreen.DanceRSS, DansRScreen.Upload),
             listOf(
                 Icons.Outlined.ViewWeek,
                 Icons.Outlined.Home,
+                Icons.Outlined.School,
                 Icons.Outlined.Add
             ),
             listOf(
                 R.string.gallery_icon,
                 R.string.start_icon,
+                R.string.resources_icon,
                 R.string.upload_icon
             )
         );
@@ -290,6 +296,9 @@ fun DansRApp(
             }
             composable(route = DansRScreen.Upload.name) {
                 VideoCaptureScreen(navController = navController)
+            }
+            composable(route = DansRScreen.DanceRSS.name) {
+                DancingResourcesScreenContent(screen = currentScreen, navController = navController)
             }
             composable(route = "LearningScreen") { backStackEntry ->
                 val videoPath = navController.previousBackStackEntry
