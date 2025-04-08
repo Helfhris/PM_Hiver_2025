@@ -1,5 +1,6 @@
 import android.content.Context
 import android.net.Uri
+import android.util.Log
 import android.widget.Toast
 import android.widget.VideoView
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -29,6 +30,7 @@ import androidx.core.content.FileProvider
 import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
 import androidx.media3.exoplayer.ExoPlayer
+import com.example.dansr.DansRScreen
 import java.io.File
 
 @Composable
@@ -38,18 +40,15 @@ fun LearningScreen(videoPath: String, navController: NavController) {
 
     when {
         userVideoUri != null -> {
-            // Afficher les deux vidéos côte à côte
-            CompareDanceVideos(videoPath, userVideoUri!!)
+            CompareDanceVideos(videoPath, userVideoUri!!, navController)
         }
         isRecording -> {
-            // Lancer l'enregistrement
             LaunchCameraForRecording { uri ->
                 userVideoUri = uri
                 isRecording = false
             }
         }
         else -> {
-            // Affichage normal avec les boutons
             VideoWithControls(
                 videoPath = videoPath,
                 onStart = { isRecording = true }
@@ -128,9 +127,7 @@ fun VideoWithControls(videoPath: String, onStart: () -> Unit) {
 
 
 @Composable
-fun LaunchCameraForRecording(
-    onVideoRecorded: (Uri) -> Unit
-) {
+fun LaunchCameraForRecording(onVideoRecorded: (Uri) -> Unit) {
     val context = LocalContext.current
     val videoFile = remember {
         val cacheDir = context.externalCacheDir ?: context.cacheDir
@@ -150,7 +147,6 @@ fun LaunchCameraForRecording(
         }
     }
 
-    // Appel direct au launcher
     LaunchedEffect(Unit) {
         captureLauncher.launch(videoUri)
     }
@@ -158,14 +154,11 @@ fun LaunchCameraForRecording(
 
 
 @Composable
-fun CompareDanceVideos(
-    modelVideoPath: String,
-    userVideoUri: Uri
-) {
+fun CompareDanceVideos(modelVideoPath: String, userVideoUri: Uri, navController: NavController) {
     val context = LocalContext.current
     var isSwapped by remember { mutableStateOf(false) }
+    var showIcons by remember { mutableStateOf(false) }
 
-    // ExoPlayer du modèle (depuis les assets)
     val modelPlayer = remember {
         ExoPlayer.Builder(context).build().apply {
             val assetUri = Uri.parse("asset:///$modelVideoPath")
@@ -175,7 +168,6 @@ fun CompareDanceVideos(
         }
     }
 
-    // ExoPlayer de l'utilisateur (depuis Uri)
     val userPlayer = remember {
         ExoPlayer.Builder(context).build().apply {
             setMediaItem(MediaItem.fromUri(userVideoUri))
@@ -184,7 +176,6 @@ fun CompareDanceVideos(
         }
     }
 
-    // Gestion de la synchro
     DisposableEffect(Unit) {
         val listener = object : Player.Listener {
             override fun onPlaybackStateChanged(state: Int) {
@@ -207,27 +198,25 @@ fun CompareDanceVideos(
         }
     }
 
-    // Affichage
     Box(
         modifier = Modifier
             .fillMaxSize()
             .pointerInput(Unit) {
                 detectTapGestures(
                     onDoubleTap = {
-                        // Inverser l'état lors d'un double tap
                         isSwapped = !isSwapped
-
-                        // Recommencer les vidéos à 0 en même temps
                         modelPlayer.seekTo(0)
                         modelPlayer.playWhenReady = true
-
                         userPlayer.seekTo(0)
                         userPlayer.playWhenReady = true
+                    },
+                    onTap = {
+                        showIcons = !showIcons
                     }
                 )
             }
     ) {
-        // Vidéo modèle plein écran (affichée en fonction de l'état)
+        // Display videos
         if (!isSwapped) {
             AndroidView(
                 factory = { ctx ->
@@ -239,7 +228,6 @@ fun CompareDanceVideos(
                 modifier = Modifier.fillMaxSize()
             )
 
-            // Vidéo utilisateur (overlay en haut à droite)
             Box(
                 modifier = Modifier.fillMaxSize(),
                 contentAlignment = Alignment.TopEnd
@@ -257,7 +245,6 @@ fun CompareDanceVideos(
                 )
             }
         } else {
-            // Vidéo utilisateur plein écran (affichée en fonction de l'état)
             AndroidView(
                 factory = { ctx ->
                     PlayerView(ctx).apply {
@@ -268,7 +255,6 @@ fun CompareDanceVideos(
                 modifier = Modifier.fillMaxSize()
             )
 
-            // Vidéo modèle (overlay en haut à droite)
             Box(
                 modifier = Modifier.fillMaxSize(),
                 contentAlignment = Alignment.TopEnd
@@ -286,11 +272,97 @@ fun CompareDanceVideos(
                 )
             }
         }
+
+        // Display conditional icons
+        if (showIcons) {
+            Row(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(horizontal = 16.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                IconButton(
+                    onClick = { /* TODO: Replay */ },
+                    modifier = Modifier
+                        .background(Color(0xFFFF9800), shape = MaterialTheme.shapes.medium)
+                        .padding(8.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Replay,
+                        contentDescription = "Replay",
+                        tint = Color.White,
+                        modifier = Modifier.size(32.dp)
+                    )
+                }
+
+                IconButton(
+                    onClick = {
+                        publishUserVideo(context, userVideoUri)
+                        showIcons = false
+                        navController.navigate(DansRScreen.Start.name) {
+                            popUpTo(0)
+                        }
+                    },
+                    modifier = Modifier
+                        .background(Color(0xFF4CAF50), shape = MaterialTheme.shapes.medium)
+                        .padding(8.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Flag,
+                        contentDescription = "Publier",
+                        tint = Color.White,
+                        modifier = Modifier.size(32.dp)
+                    )
+                }
+            }
+        }
     }
 }
 
 
+fun publishUserVideo(context: Context, videoUri: Uri) {
+    try {
+        val videosDir = File(context.filesDir, "videos")
+        if (!videosDir.exists()) videosDir.mkdirs()
 
+        // Generate a unique name
+        val existing = videosDir.listFiles()?.map { it.name } ?: emptyList()
+        var index = 1
+        var newFileName: String
+        do {
+            newFileName = "VideoUploaded$index.mp4"
+            index++
+        } while (newFileName in existing)
+
+        val destFile = File(videosDir, newFileName)
+
+        // Copy the video
+        context.contentResolver.openInputStream(videoUri)?.use { input ->
+            destFile.outputStream().use { output ->
+                input.copyTo(output)
+            }
+        }
+
+        // Update JSON
+        val statuses = loadVideoStatuses(context).toMutableList()
+        val existingStatus = statuses.find { it.fileName == newFileName }
+
+        if (existingStatus != null) {
+            existingStatus.isUploaded = true
+        } else {
+            statuses.add(VideoStatus(newFileName, isUploaded = true))
+        }
+
+        saveVideoStatuses(context, statuses)
+
+        Toast.makeText(context, "Video published!", Toast.LENGTH_SHORT).show()
+
+    } catch (e: Exception) {
+        Log.e("PublishVideo", "Error during publication", e)
+        Toast.makeText(context, "Publication failure", Toast.LENGTH_SHORT).show()
+    }
+}
 
 
 
