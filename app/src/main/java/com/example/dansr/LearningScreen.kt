@@ -40,7 +40,15 @@ fun LearningScreen(videoPath: String, navController: NavController) {
 
     when {
         userVideoUri != null -> {
-            CompareDanceVideos(videoPath, userVideoUri!!, navController)
+            CompareDanceVideos(
+                modelVideoPath = videoPath,
+                userVideoUri = userVideoUri!!,
+                navController = navController,
+                onReplay = {
+                    userVideoUri = null
+                    isRecording = true
+                }
+            )
         }
         isRecording -> {
             LaunchCameraForRecording { uri ->
@@ -154,7 +162,7 @@ fun LaunchCameraForRecording(onVideoRecorded: (Uri) -> Unit) {
 
 
 @Composable
-fun CompareDanceVideos(modelVideoPath: String, userVideoUri: Uri, navController: NavController) {
+fun CompareDanceVideos(modelVideoPath: String, userVideoUri: Uri, navController: NavController,onReplay: () -> Unit) {
     val context = LocalContext.current
     var isSwapped by remember { mutableStateOf(false) }
     var showIcons by remember { mutableStateOf(false) }
@@ -283,7 +291,7 @@ fun CompareDanceVideos(modelVideoPath: String, userVideoUri: Uri, navController:
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 IconButton(
-                    onClick = { /* TODO: Replay */ },
+                    onClick = {onReplay()},
                     modifier = Modifier
                         .background(Color(0xFFFF9800), shape = MaterialTheme.shapes.medium)
                         .padding(8.dp)
@@ -310,7 +318,7 @@ fun CompareDanceVideos(modelVideoPath: String, userVideoUri: Uri, navController:
                 ) {
                     Icon(
                         imageVector = Icons.Default.Flag,
-                        contentDescription = "Publier",
+                        contentDescription = "Publish",
                         tint = Color.White,
                         modifier = Modifier.size(32.dp)
                     )
