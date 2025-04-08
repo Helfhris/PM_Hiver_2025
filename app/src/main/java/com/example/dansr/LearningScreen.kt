@@ -143,7 +143,7 @@ fun LaunchCameraForRecording(onVideoRecorded: (Uri) -> Unit) {
         if (success) {
             onVideoRecorded(videoUri)
         } else {
-            Toast.makeText(context, "L'enregistrement a échoué", Toast.LENGTH_SHORT).show()
+            Toast.makeText(context, "Recording failed", Toast.LENGTH_SHORT).show()
         }
     }
 
