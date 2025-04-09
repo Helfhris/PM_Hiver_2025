@@ -182,8 +182,9 @@ fun VideoPlayerScreen(context: Context, navController: NavController) {
                                 currentVideoUri?.let {
                                     val fileName = it.toString().substringAfterLast("/")
                                     val assetPath = "videos/$fileName"
-                                    navController.currentBackStackEntry?.savedStateHandle?.set("videoPath", assetPath)
-                                    navController.navigate("LearningScreen")
+                                    Log.d("FileName", "File Name: $fileName")
+                                    val encodedPath = Uri.encode(assetPath)
+                                    navController.navigate("LearningScreen/$encodedPath")
                                 }
                                 dragState = DragState.COMPLETED
                             }
@@ -240,8 +241,9 @@ fun VideoPlayerScreen(context: Context, navController: NavController) {
                         currentVideoUri?.let {
                             val fileName = it.toString().substringAfterLast("/")
                             val assetPath = "videos/$fileName"
-                            navController.currentBackStackEntry?.savedStateHandle?.set("videoPath", assetPath)
-                            navController.navigate("LearningScreen")
+                            Log.d("FileName", "File Name: $fileName")
+                            val encodedPath = Uri.encode(assetPath)
+                            navController.navigate("LearningScreen/$encodedPath")
                         }
                     }
             ) {

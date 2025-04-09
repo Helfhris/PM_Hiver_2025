@@ -55,6 +55,8 @@ import androidx.navigation.compose.rememberNavController
 import com.example.dansr.ui.MainViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavGraph.Companion.findStartDestination
+import androidx.navigation.NavType
+import androidx.navigation.navArgument
 
 
 enum class DansRScreen(@StringRes val title: Int) {
@@ -300,11 +302,11 @@ fun DansRApp(
             composable(route = DansRScreen.DanceRSS.name) {
                 DancingResourcesScreenContent(screen = currentScreen, navController = navController)
             }
-            composable(route = "LearningScreen") { backStackEntry ->
-                val videoPath = navController.previousBackStackEntry
-                    ?.savedStateHandle
-                    ?.get<String>("videoPath") ?: ""
-
+            composable(
+                route = "LearningScreen/{videoPath}",
+                arguments = listOf(navArgument("videoPath") { type = NavType.StringType })
+            ) { backStackEntry ->
+                val videoPath = backStackEntry.arguments?.getString("videoPath") ?: ""
                 LearningScreen(videoPath, navController)
             }
         }

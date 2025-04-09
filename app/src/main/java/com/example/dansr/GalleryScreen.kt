@@ -170,8 +170,8 @@ fun GalleryScreenContent(screen: DansRScreen, navController: NavController) {
                         learningVideo = videoPath // Put Video as to be Learned
                         selectedVideo = null      // Close Playing
                         exoPlayer.release()
-                        navController.currentBackStackEntry?.savedStateHandle?.set("videoPath", videoPath)
-                        navController.navigate("LearningScreen")
+                        val encodedPath = Uri.encode(videoPath)
+                        navController.navigate("LearningScreen/$encodedPath")
                     },
                     modifier = Modifier
                         .align(Alignment.BottomCenter)
