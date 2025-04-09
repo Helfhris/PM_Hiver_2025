@@ -179,8 +179,8 @@ fun VideoPlayerScreen(context: Context, navController: NavController) {
                             }
                             // Upload (swipe right)
                             dragAmount.x > horizontalThreshold && abs(dragAmount.x) > abs(dragAmount.y) -> {
-                                currentVideoUri?.let { uri ->
-                                    val fileName = uri.toString().substringAfterLast("/")
+                                currentVideoUri?.let {
+                                    val fileName = it.toString().substringAfterLast("/")
                                     val assetPath = "videos/$fileName"
                                     navController.currentBackStackEntry?.savedStateHandle?.set("videoPath", assetPath)
                                     navController.navigate("LearningScreen")
@@ -237,9 +237,11 @@ fun VideoPlayerScreen(context: Context, navController: NavController) {
                     .align(Alignment.CenterEnd)
                     .padding(16.dp)
                     .clickable {
-                        navController.navigate(DansRScreen.Upload.name) {
-                            popUpTo = navController.graph.findStartDestination().id
-                            launchSingleTop = true
+                        currentVideoUri?.let {
+                            val fileName = it.toString().substringAfterLast("/")
+                            val assetPath = "videos/$fileName"
+                            navController.currentBackStackEntry?.savedStateHandle?.set("videoPath", assetPath)
+                            navController.navigate("LearningScreen")
                         }
                     }
             ) {
