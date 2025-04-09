@@ -25,6 +25,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -66,12 +67,24 @@ fun VideoPlayerScreen(context: Context, navController: NavController) {
     val currentContext = LocalContext.current
 
     // Get current video status
-    val currentVideoUri = if (videoList.isNotEmpty()) videoList[currentVideoIndex] else null
-    val currentFileName = currentVideoUri?.toString()?.substringAfterLast("/")
-    val videoStatuses = loadVideoStatuses(context)
-    val currentVideoStatus = currentFileName?.let { fileName ->
-        videoStatuses.find { it.fileName == fileName }
+    val currentVideoUri by remember {
+        derivedStateOf {
+            if (videoList.isNotEmpty()) videoList[currentVideoIndex] else null
+        }
     }
+
+    val currentFileName by remember(currentVideoUri) {
+        mutableStateOf(currentVideoUri?.toString()?.substringAfterLast("/"))
+    }
+
+    val videoStatuses = remember { loadVideoStatuses(context) }
+
+    val currentVideoStatus by remember(currentFileName, videoStatuses) {
+        mutableStateOf(currentFileName?.let { fileName ->
+            videoStatuses.find { it.fileName == fileName }
+        })
+    }
+
     var isLiked by remember { mutableStateOf(currentVideoStatus?.isLiked ?: false) }
 
     // Update isLiked when video changes
