@@ -1,20 +1,16 @@
+package com.example.dansr
+
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.navigation.NavController
-import com.example.dansr.DansRScreen
-import com.example.dansr.R
 import android.content.Context
 import android.graphics.Bitmap
 import android.media.MediaMetadataRetriever
@@ -23,7 +19,6 @@ import android.media.MediaMetadataRetriever.METADATA_KEY_VIDEO_WIDTH
 import android.net.Uri
 import android.util.Log
 import android.util.LruCache
-import android.widget.Toast
 import androidx.annotation.OptIn
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -31,14 +26,12 @@ import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.Add
 import androidx.compose.material.icons.outlined.Close
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Button
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
-import androidx.compose.ui.platform.LocalConfiguration
 import androidx.media3.common.MediaItem
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
@@ -61,7 +54,6 @@ fun GalleryPagerScreen(currentScreen: DansRScreen, navController: NavController)
     val pages = listOf(DansRScreen.Likes, DansRScreen.Saved, DansRScreen.Uploaded)
     val startIndex = pages.indexOf(currentScreen).coerceAtLeast(0)
     val pagerState = rememberPagerState(initialPage = startIndex, pageCount = { pages.size })
-    val coroutineScope = rememberCoroutineScope()
 
     HorizontalPager(
         state = pagerState,
@@ -90,8 +82,6 @@ fun GalleryScreenContent(screen: DansRScreen, navController: NavController) {
     var videoDimensions by remember { mutableStateOf<Pair<Int, Int>?>(null) }
     var learningVideo by remember { mutableStateOf<String?>(null) } // Selected video to learn
 
-    val columns = 3
-    val rows = videoFiles.chunked(columns.coerceAtLeast(1)) // Video grouped in rows
     LaunchedEffect(selectedVideo) {
         selectedVideo?.let { path ->
             videoDimensions = withContext(Dispatchers.IO) {
@@ -148,7 +138,7 @@ fun GalleryScreenContent(screen: DansRScreen, navController: NavController) {
                             useController = true
                             setShowBuffering(PlayerView.SHOW_BUFFERING_WHEN_PLAYING)
                             setControllerShowTimeoutMs(0) // Always show Controller
-                            setControllerAutoShow(true)
+                            controllerAutoShow = true
                             resizeMode = AspectRatioFrameLayout.RESIZE_MODE_FILL
                         }
                     },

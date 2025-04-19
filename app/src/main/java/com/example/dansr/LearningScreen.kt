@@ -2,28 +2,26 @@ import android.content.Context
 import android.net.Uri
 import android.util.Log
 import android.widget.Toast
-import android.widget.VideoView
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Replay
-import androidx.compose.material.icons.filled.Flag
+import androidx.compose.material.icons.filled.Upload
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.media3.ui.PlayerView
 import androidx.navigation.NavController
-import createExoPlayerWithAssets
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.core.content.FileProvider
@@ -31,6 +29,9 @@ import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
 import androidx.media3.exoplayer.ExoPlayer
 import com.example.dansr.DansRScreen
+import com.example.dansr.VideoStatus
+import com.example.dansr.loadVideoStatuses
+import com.example.dansr.saveVideoStatuses
 import java.io.File
 
 @Composable
@@ -94,13 +95,13 @@ fun VideoWithControls(videoPath: String, onStart: () -> Unit) {
                     exoPlayer.playWhenReady = isPlaying
                 },
                 modifier = Modifier
-                    .background(if (isPlaying) Color.Red else Color.Green)
+                    .background(MaterialTheme.colorScheme.tertiaryContainer)
                     .padding(8.dp)
             ) {
                 Icon(
                     imageVector = if (isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
                     contentDescription = null,
-                    tint = Color.White,
+                    tint = MaterialTheme.colorScheme.onTertiaryContainer,
                     modifier = Modifier.size(32.dp)
                 )
             }
@@ -111,9 +112,9 @@ fun VideoWithControls(videoPath: String, onStart: () -> Unit) {
                     exoPlayer.playWhenReady = true
                     isPlaying = true
                 },
-                modifier = Modifier.background(Color(0xFFFFA500)).padding(8.dp)
+                modifier = Modifier.background(MaterialTheme.colorScheme.tertiaryContainer).padding(8.dp)
             ) {
-                Icon(Icons.Default.Replay, contentDescription = null, tint = Color.White, modifier = Modifier.size(32.dp))
+                Icon(Icons.Default.Replay, contentDescription = null, tint = MaterialTheme.colorScheme.onTertiaryContainer, modifier = Modifier.size(32.dp))
             }
 
             IconButton(
@@ -121,9 +122,9 @@ fun VideoWithControls(videoPath: String, onStart: () -> Unit) {
                     exoPlayer.pause()
                     onStart()
                 },
-                modifier = Modifier.background(Color(0xFF9C27B0)).padding(8.dp)
+                modifier = Modifier.background(MaterialTheme.colorScheme.tertiaryContainer).padding(8.dp)
             ) {
-                Icon(Icons.Default.Flag, contentDescription = "Start", tint = Color.White, modifier = Modifier.size(32.dp))
+                Icon(Icons.Default.Check, contentDescription = "Start", tint = MaterialTheme.colorScheme.onTertiaryContainer, modifier = Modifier.size(32.dp))
             }
         }
     }
@@ -293,13 +294,13 @@ fun CompareDanceVideos(modelVideoPath: String, userVideoUri: Uri, navController:
                 IconButton(
                     onClick = {onReplay()},
                     modifier = Modifier
-                        .background(Color(0xFFFF9800), shape = MaterialTheme.shapes.medium)
+                        .background(MaterialTheme.colorScheme.tertiaryContainer, shape = MaterialTheme.shapes.medium)
                         .padding(8.dp)
                 ) {
                     Icon(
                         imageVector = Icons.Default.Replay,
                         contentDescription = "Replay",
-                        tint = Color.White,
+                        tint = MaterialTheme.colorScheme.onTertiaryContainer,
                         modifier = Modifier.size(32.dp)
                     )
                 }
@@ -313,13 +314,13 @@ fun CompareDanceVideos(modelVideoPath: String, userVideoUri: Uri, navController:
                         }
                     },
                     modifier = Modifier
-                        .background(Color(0xFF4CAF50), shape = MaterialTheme.shapes.medium)
+                        .background(MaterialTheme.colorScheme.tertiaryContainer, shape = MaterialTheme.shapes.medium)
                         .padding(8.dp)
                 ) {
                     Icon(
-                        imageVector = Icons.Default.Flag,
+                        imageVector = Icons.Default.Upload,
                         contentDescription = "Publish",
-                        tint = Color.White,
+                        tint = MaterialTheme.colorScheme.onTertiaryContainer,
                         modifier = Modifier.size(32.dp)
                     )
                 }

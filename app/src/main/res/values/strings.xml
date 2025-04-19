@@ -6,6 +6,7 @@
     <string name="uploaded">Uploaded</string>
     <string name="upload">Upload</string>
     <string name="resources">Resources</string>
+    <string name="learningScreen">Learning</string>
     <string name="logo_description">The logo of the DansR app</string>
     <string name="upload_publish">Publish</string>
     <string name="upload_retry">Retry</string>
@@ -19,6 +20,7 @@
     <string name="saved_icon">Saved page icon</string>
     <string name="uploaded_icon">Uploaded page icon</string>
     <string name="resources_icon">Resources page icon</string>
+    <string name="learning_icon">Learning page icon</string>
     <string name="user_icon">User icon</string>
 
     <string name="titleResource1">Learn to Dance</string>

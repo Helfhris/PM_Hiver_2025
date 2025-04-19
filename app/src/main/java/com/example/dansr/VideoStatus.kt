@@ -1,3 +1,5 @@
+package com.example.dansr
+
 import android.content.Context
 import android.util.Log
 import android.widget.Toast
@@ -62,7 +64,7 @@ fun markVideoAsSaved(context: Context, fileName: String) {
         saveVideoStatuses(context, statuses)
 
     } catch (e: Exception) {
-        Log.e("VideoStatus", "Error updating status", e)
+        Log.e("com.example.dansr.VideoStatus", "Error updating status", e)
     }
 }
 

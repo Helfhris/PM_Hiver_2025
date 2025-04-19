@@ -1,49 +1,37 @@
 package com.example.dansr
 
-import GalleryPagerScreen
-import GalleryScreenContent
 import LearningScreen
 import androidx.annotation.StringRes
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.outlined.AccountCircle
-import androidx.compose.material.icons.outlined.Add
-import androidx.compose.material.icons.outlined.Apps
 import androidx.compose.material.icons.outlined.FavoriteBorder
+import androidx.compose.material.icons.outlined.FileUpload
 import androidx.compose.material.icons.outlined.Home
 import androidx.compose.material.icons.outlined.HourglassBottom
+import androidx.compose.material.icons.outlined.PlayLesson
 import androidx.compose.material.icons.outlined.School
 import androidx.compose.material.icons.outlined.StarBorder
-import androidx.compose.material.icons.outlined.ViewCozy
 import androidx.compose.material.icons.outlined.ViewWeek
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.currentCompositionLocalContext
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -52,8 +40,6 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
-import com.example.dansr.ui.MainViewModel
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavType
 import androidx.navigation.navArgument
@@ -65,15 +51,14 @@ enum class DansRScreen(@StringRes val title: Int) {
     Saved(title = R.string.saved),
     Uploaded(title = R.string.uploaded),
     Upload(title = R.string.upload),
-    DanceRSS(title = R.string.resources)
+    DanceRSS(title = R.string.resources),
+    LearningScreen(title = R.string.learningScreen)
 }
 
-@OptIn(ExperimentalMaterial3Api::class) //Otherwise there's a problem with the top bar for some reason
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DansRAppBar(
-    canNavigateBack: Boolean,
     currentScreen: DansRScreen,
-    navigateUp: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val screenIcons = mapOf(
@@ -81,8 +66,9 @@ fun DansRAppBar(
         DansRScreen.Likes to Icons.Outlined.ViewWeek,
         DansRScreen.Saved to Icons.Outlined.ViewWeek,
         DansRScreen.Uploaded to Icons.Outlined.ViewWeek,
-        DansRScreen.Upload to Icons.Outlined.Add,
+        DansRScreen.Upload to Icons.Outlined.FileUpload,
         DansRScreen.DanceRSS to Icons.Outlined.School,
+        DansRScreen.LearningScreen to Icons.Outlined.PlayLesson
     )
     val screenIconDescriptions = mapOf(
         DansRScreen.Start to R.string.start_icon,
@@ -91,6 +77,7 @@ fun DansRAppBar(
         DansRScreen.Uploaded to R.string.gallery_icon,
         DansRScreen.Upload to R.string.upload_icon,
         DansRScreen.DanceRSS to R.string.resources_icon,
+        DansRScreen.LearningScreen to R.string.resources_icon
     )
     TopAppBar(
         title = {
@@ -116,18 +103,19 @@ fun DansRAppBar(
                     Icon(
                         imageVector = screenIcons[currentScreen] ?: Icons.Outlined.Home,
                         contentDescription = stringResource(screenIconDescriptions[currentScreen] ?: R.string.start_icon),
-                        modifier = Modifier.size(40.dp)
+                        modifier = Modifier.size(40.dp),
                     )
                 }
                 Column(
                     horizontalAlignment = Alignment.End,
                     verticalArrangement = Arrangement.Center
                 ){
-                    Icon(
+                    Spacer(modifier = Modifier.size(width = 55.dp, height = 0.dp))
+                    /*Icon(
                         imageVector = Icons.Outlined.AccountCircle,
                         contentDescription = stringResource(R.string.user_icon),
                         modifier = Modifier.size(40.dp)
-                    )
+                    )*/ // We didn't make user accounts in the current version
                 }
             }
         },
@@ -170,7 +158,7 @@ fun GalleryTopBar(currentScreen: DansRScreen, navController: NavHostController) 
                     onClick = {
                         if (currentScreen != screen) {
                             navController.navigate(screen.name) {
-                                popUpTo = navController.graph.findStartDestination().id
+                                popUpTo(navController.graph.findStartDestination().id)
                                 launchSingleTop = true
                             }
                         }
@@ -193,20 +181,20 @@ fun GalleryTopBar(currentScreen: DansRScreen, navController: NavHostController) 
 fun BottomBar(currentScreen: DansRScreen, navController: NavHostController) {
     val (screens, icons, iconDescriptions) =
         Triple(
-            listOf(DansRScreen.Likes, DansRScreen.Start, DansRScreen.DanceRSS, DansRScreen.Upload),
+            listOf(DansRScreen.Start, DansRScreen.Likes, DansRScreen.DanceRSS, DansRScreen.Upload),
             listOf(
-                Icons.Outlined.ViewWeek,
                 Icons.Outlined.Home,
+                Icons.Outlined.ViewWeek,
                 Icons.Outlined.School,
-                Icons.Outlined.Add
+                Icons.Outlined.FileUpload
             ),
             listOf(
-                R.string.gallery_icon,
                 R.string.start_icon,
+                R.string.gallery_icon,
                 R.string.resources_icon,
                 R.string.upload_icon
             )
-        );
+        )
 
     // Iterate over the screens and show the corresponding icons
     Row(
@@ -226,7 +214,7 @@ fun BottomBar(currentScreen: DansRScreen, navController: NavHostController) {
                     onClick = {
                         if (currentScreen != screen) {
                             navController.navigate(screen.name) {
-                                popUpTo = navController.graph.findStartDestination().id
+                                popUpTo(navController.graph.findStartDestination().id)
                             }
                         }
                     }
@@ -234,8 +222,18 @@ fun BottomBar(currentScreen: DansRScreen, navController: NavHostController) {
                     Icon(
                         imageVector = icons[index],
                         contentDescription = stringResource(iconDescriptions[index]),
-                        tint = if (currentScreen == screen) MaterialTheme.colorScheme.primary
-                        else MaterialTheme.colorScheme.onSurface
+                        tint = if (
+                            screen == DansRScreen.Likes &&
+                            (currentScreen == DansRScreen.Likes ||
+                                    currentScreen == DansRScreen.Uploaded ||
+                                    currentScreen == DansRScreen.Saved)
+                        ) {
+                            MaterialTheme.colorScheme.primary
+                        } else if (currentScreen == screen) {
+                            MaterialTheme.colorScheme.primary
+                        } else {
+                            MaterialTheme.colorScheme.onSurface
+                        }
                     )
                 }
             }
@@ -249,15 +247,17 @@ fun BottomBar(currentScreen: DansRScreen, navController: NavHostController) {
 
 @Composable
 fun DansRApp(
-    viewModel: MainViewModel = viewModel(),
     navController: NavHostController = rememberNavController()
 ) {
-    val uiState by viewModel.uiState.collectAsState()
     val backStackEntry by navController.currentBackStackEntryAsState()
 
-    // Déterminer l'écran actuel en fonction de la pile d'écran
     val currentRoute = backStackEntry?.destination?.route
-    val currentScreen = DansRScreen.entries.find { it.name == currentRoute } ?: DansRScreen.Start
+    val currentScreen = when {
+        currentRoute?.startsWith("LearningScreen") == true -> DansRScreen.LearningScreen
+        DansRScreen.entries.any { it.name == currentRoute } -> DansRScreen.entries.first { it.name == currentRoute }
+        else -> DansRScreen.Start
+    }
+
 
     val showGalleryTopBar = currentScreen in listOf(DansRScreen.Likes, DansRScreen.Saved, DansRScreen.Uploaded)
 
@@ -265,9 +265,7 @@ fun DansRApp(
         topBar = {
             Column {
                 DansRAppBar(
-                    canNavigateBack = navController.previousBackStackEntry != null,
                     currentScreen = currentScreen,
-                    navigateUp = { navController.navigateUp() }
                 )
 
                 if (showGalleryTopBar) {
@@ -283,7 +281,7 @@ fun DansRApp(
             navController = navController,
             startDestination = DansRScreen.Start.name,
             modifier = Modifier.padding(innerPadding)
-        ) {
+        ) { // Every route in the app
             composable(route = DansRScreen.Start.name) {
                 VideoPlayerScreen(context = LocalContext.current, navController = navController)
             }
@@ -300,7 +298,7 @@ fun DansRApp(
                 VideoCaptureScreen(navController = navController)
             }
             composable(route = DansRScreen.DanceRSS.name) {
-                DancingResourcesScreenContent(screen = currentScreen, navController = navController)
+                DancingResourcesScreenContent()
             }
             composable(
                 route = "LearningScreen/{videoPath}",
