@@ -42,6 +42,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.File
 
+//Cache for thumbnails because the app was lagging when loading them
 object ThumbnailCache {
     private val cache = LruCache<String, Bitmap>(20) // Keep 20 thumbnails in memory
 
@@ -49,6 +50,7 @@ object ThumbnailCache {
     fun putThumbnail(path: String, bitmap: Bitmap) = cache.put(path, bitmap)
 }
 
+//Pager to be able to swipe between the 3 gallery screens
 @Composable
 fun GalleryPagerScreen(currentScreen: DansRScreen, navController: NavController) {
     val pages = listOf(DansRScreen.Likes, DansRScreen.Saved, DansRScreen.Uploaded)
@@ -255,7 +257,7 @@ fun extractVideoThumbnail(context: Context, filePath: String): Bitmap? {
     }
 }
 
-
+// Get the videos according to their status in the Json file to show them or not according to current screen
 fun getVideoFilesFromAssets(context: Context, screen: DansRScreen): List<String> {
     val statuses = loadVideoStatuses(context)
     val allVideos = context.assets.list("videos")?.filter { it.endsWith(".mp4") } ?: emptyList()

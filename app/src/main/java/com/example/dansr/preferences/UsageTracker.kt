@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.SharedPreferences
 import java.util.Calendar
 
+// All the methods for our usage time tracker (they are used in the MainActivity)
 class UsageTracker(context: Context) {
     private val prefs: SharedPreferences = context.getSharedPreferences("AppUsagePrefs", Context.MODE_PRIVATE)
 

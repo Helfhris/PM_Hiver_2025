@@ -60,7 +60,7 @@ enum class DansRScreen(@StringRes val title: Int) {
 fun DansRAppBar(
     currentScreen: DansRScreen,
     modifier: Modifier = Modifier
-) {
+) { // Map every route with its icon in the app and its description
     val screenIcons = mapOf(
         DansRScreen.Start to Icons.Outlined.Home,
         DansRScreen.Likes to Icons.Outlined.ViewWeek,

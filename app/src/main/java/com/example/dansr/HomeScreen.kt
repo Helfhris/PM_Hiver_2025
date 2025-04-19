@@ -173,7 +173,7 @@ fun VideoPlayerScreen(context: Context, navController: NavController) {
                                 }
                                 dragState = DragState.COMPLETED
                             }
-                            // Upload (swipe right)
+                            // Train Video (swipe right)
                             dragAmount.x > horizontalThreshold && abs(dragAmount.x) > abs(dragAmount.y) -> {
                                 currentVideoUri?.let {
                                     val fileName = it.toString().substringAfterLast("/")
@@ -228,7 +228,7 @@ fun VideoPlayerScreen(context: Context, navController: NavController) {
                 )
             }
 
-            // Right button (Add) - navigate to upload screen
+            // Right button (Add) - Same as dragging right
             Box(
                 modifier = Modifier
                     .align(Alignment.CenterEnd)
