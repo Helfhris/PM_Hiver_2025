@@ -5,6 +5,7 @@ import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
@@ -13,6 +14,7 @@ import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Replay
 import androidx.compose.material.icons.filled.Upload
+import androidx.compose.material.icons.outlined.Close
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -23,6 +25,7 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.media3.ui.PlayerView
 import androidx.navigation.NavController
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.core.content.FileProvider
 import androidx.media3.common.MediaItem
@@ -60,73 +63,92 @@ fun LearningScreen(videoPath: String, navController: NavController) {
         else -> {
             VideoWithControls(
                 videoPath = videoPath,
-                onStart = { isRecording = true }
+                onStart = { isRecording = true },
+                onClose = { navController.navigate(DansRScreen.Start.name) }
             )
         }
     }
 }
 
 @Composable
-fun VideoWithControls(videoPath: String, onStart: () -> Unit) {
+fun VideoWithControls(
+    videoPath: String,
+    onStart: () -> Unit,
+    onClose: () -> Unit
+) {
     val context = LocalContext.current
     val exoPlayer = remember { createExoPlayerWithAssets(context, videoPath) }
     var isPlaying by remember { mutableStateOf(true) }
 
-    Column(modifier = Modifier.fillMaxSize()) {
-        AndroidView(
-            factory = { ctx -> PlayerView(ctx).apply {
-                player = exoPlayer
-                useController = false
-            }},
-            modifier = Modifier
-                .fillMaxWidth()
-                .weight(1f)
-        )
-
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            horizontalArrangement = Arrangement.SpaceEvenly
-        ) {
-            IconButton(
-                onClick = {
-                    isPlaying = !isPlaying
-                    exoPlayer.playWhenReady = isPlaying
-                },
+    Box(modifier = Modifier.fillMaxSize()) {
+        Column(modifier = Modifier.fillMaxSize()) {
+            AndroidView(
+                factory = { ctx -> PlayerView(ctx).apply {
+                    player = exoPlayer
+                    useController = false
+                }},
                 modifier = Modifier
-                    .background(MaterialTheme.colorScheme.tertiaryContainer)
-                    .padding(8.dp)
-            ) {
-                Icon(
-                    imageVector = if (isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.onTertiaryContainer,
-                    modifier = Modifier.size(32.dp)
-                )
-            }
+                    .fillMaxWidth()
+                    .weight(1f)
+            )
 
-            IconButton(
-                onClick = {
-                    exoPlayer.seekTo(0)
-                    exoPlayer.playWhenReady = true
-                    isPlaying = true
-                },
-                modifier = Modifier.background(MaterialTheme.colorScheme.tertiaryContainer).padding(8.dp)
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                horizontalArrangement = Arrangement.SpaceEvenly
             ) {
-                Icon(Icons.Default.Replay, contentDescription = null, tint = MaterialTheme.colorScheme.onTertiaryContainer, modifier = Modifier.size(32.dp))
-            }
+                IconButton(
+                    onClick = {
+                        isPlaying = !isPlaying
+                        exoPlayer.playWhenReady = isPlaying
+                    },
+                    modifier = Modifier
+                        .background(MaterialTheme.colorScheme.tertiaryContainer)
+                        .padding(8.dp)
+                ) {
+                    Icon(
+                        imageVector = if (isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.onTertiaryContainer,
+                        modifier = Modifier.size(32.dp)
+                    )
+                }
 
-            IconButton(
-                onClick = {
-                    exoPlayer.pause()
-                    onStart()
-                },
-                modifier = Modifier.background(MaterialTheme.colorScheme.tertiaryContainer).padding(8.dp)
-            ) {
-                Icon(Icons.Default.Check, contentDescription = "Start", tint = MaterialTheme.colorScheme.onTertiaryContainer, modifier = Modifier.size(32.dp))
+                IconButton(
+                    onClick = {
+                        exoPlayer.seekTo(0)
+                        exoPlayer.playWhenReady = true
+                        isPlaying = true
+                    },
+                    modifier = Modifier.background(MaterialTheme.colorScheme.tertiaryContainer).padding(8.dp)
+                ) {
+                    Icon(Icons.Default.Replay, contentDescription = null, tint = MaterialTheme.colorScheme.onTertiaryContainer, modifier = Modifier.size(32.dp))
+                }
+
+                IconButton(
+                    onClick = {
+                        exoPlayer.pause()
+                        onStart()
+                    },
+                    modifier = Modifier.background(MaterialTheme.colorScheme.tertiaryContainer).padding(8.dp)
+                ) {
+                    Icon(Icons.Default.Check, contentDescription = "Start", tint = MaterialTheme.colorScheme.onTertiaryContainer, modifier = Modifier.size(32.dp))
+                }
             }
         }
+
+        // Close Button en haut à gauche
+        Icon(
+            imageVector = Icons.Outlined.Close,
+            contentDescription = "Close video",
+            tint = Color.White,
+            modifier = Modifier
+                .padding(16.dp)
+                .size(32.dp)
+                .align(Alignment.TopStart)
+                .clickable { onClose() }
+        )
     }
 
     DisposableEffect(Unit) {
@@ -166,7 +188,6 @@ fun LaunchCameraForRecording(onVideoRecorded: (Uri) -> Unit) {
 fun CompareDanceVideos(modelVideoPath: String, userVideoUri: Uri, navController: NavController,onReplay: () -> Unit) {
     val context = LocalContext.current
     var isSwapped by remember { mutableStateOf(false) }
-    var showIcons by remember { mutableStateOf(false) }
 
     val modelPlayer = remember {
         ExoPlayer.Builder(context).build().apply {
@@ -211,18 +232,6 @@ fun CompareDanceVideos(modelVideoPath: String, userVideoUri: Uri, navController:
         modifier = Modifier
             .fillMaxSize()
             .pointerInput(Unit) {
-                detectTapGestures(
-                    onDoubleTap = {
-                        isSwapped = !isSwapped
-                        modelPlayer.seekTo(0)
-                        modelPlayer.playWhenReady = true
-                        userPlayer.seekTo(0)
-                        userPlayer.playWhenReady = true
-                    },
-                    onTap = {
-                        showIcons = !showIcons
-                    }
-                )
             }
     ) {
         // Display videos
@@ -251,6 +260,17 @@ fun CompareDanceVideos(modelVideoPath: String, userVideoUri: Uri, navController:
                     modifier = Modifier
                         .size(width = 200.dp, height = 300.dp)
                         .padding(top = 20.dp)
+                        .pointerInput(Unit) {
+                            detectTapGestures(
+                                onTap = {
+                                    isSwapped = !isSwapped
+                                    modelPlayer.seekTo(0)
+                                    userPlayer.seekTo(0)
+                                    modelPlayer.playWhenReady = true
+                                    userPlayer.playWhenReady = true
+                                }
+                            )
+                        }
                 )
             }
         } else {
@@ -265,65 +285,74 @@ fun CompareDanceVideos(modelVideoPath: String, userVideoUri: Uri, navController:
             )
 
             Box(
-                modifier = Modifier.fillMaxSize(),
+                modifier = Modifier
+                    .fillMaxSize(),
                 contentAlignment = Alignment.TopEnd
             ) {
                 AndroidView(
                     factory = { ctx ->
                         PlayerView(ctx).apply {
-                            player = modelPlayer
+                            player = if (!isSwapped) userPlayer else modelPlayer
                             useController = false
                         }
                     },
                     modifier = Modifier
                         .size(width = 200.dp, height = 300.dp)
                         .padding(top = 20.dp)
+                        .pointerInput(Unit) {
+                            detectTapGestures(
+                                onTap = {
+                                    isSwapped = !isSwapped
+                                    modelPlayer.seekTo(0)
+                                    userPlayer.seekTo(0)
+                                    modelPlayer.playWhenReady = true
+                                    userPlayer.playWhenReady = true
+                                }
+                            )
+                        }
                 )
             }
         }
 
-        // Display conditional icons
-        if (showIcons) {
-            Row(
+        // Display icons
+        Row(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(horizontal = 16.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            IconButton(
+                onClick = {onReplay()},
                 modifier = Modifier
-                    .fillMaxSize()
-                    .padding(horizontal = 16.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+                    .background(MaterialTheme.colorScheme.tertiaryContainer, shape = MaterialTheme.shapes.medium)
+                    .padding(8.dp)
             ) {
-                IconButton(
-                    onClick = {onReplay()},
-                    modifier = Modifier
-                        .background(MaterialTheme.colorScheme.tertiaryContainer, shape = MaterialTheme.shapes.medium)
-                        .padding(8.dp)
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Replay,
-                        contentDescription = "Replay",
-                        tint = MaterialTheme.colorScheme.onTertiaryContainer,
-                        modifier = Modifier.size(32.dp)
-                    )
-                }
+                Icon(
+                    imageVector = Icons.Default.Replay,
+                    contentDescription = "Replay",
+                    tint = MaterialTheme.colorScheme.onTertiaryContainer,
+                    modifier = Modifier.size(32.dp)
+                )
+            }
 
-                IconButton(
-                    onClick = {
-                        publishUserVideo(context, userVideoUri)
-                        showIcons = false
-                        navController.navigate(DansRScreen.Start.name) {
-                            popUpTo(0)
-                        }
-                    },
-                    modifier = Modifier
-                        .background(MaterialTheme.colorScheme.tertiaryContainer, shape = MaterialTheme.shapes.medium)
-                        .padding(8.dp)
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Upload,
-                        contentDescription = "Publish",
-                        tint = MaterialTheme.colorScheme.onTertiaryContainer,
-                        modifier = Modifier.size(32.dp)
-                    )
-                }
+            IconButton(
+                onClick = {
+                    publishUserVideo(context, userVideoUri)
+                    navController.navigate(DansRScreen.Start.name) {
+                        popUpTo(0)
+                    }
+                },
+                modifier = Modifier
+                    .background(MaterialTheme.colorScheme.tertiaryContainer, shape = MaterialTheme.shapes.medium)
+                    .padding(8.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Upload,
+                    contentDescription = "Publish",
+                    tint = MaterialTheme.colorScheme.onTertiaryContainer,
+                    modifier = Modifier.size(32.dp)
+                )
             }
         }
     }
@@ -386,6 +415,7 @@ fun createExoPlayerWithAssets(context: Context, filePath: String): ExoPlayer {
     exoPlayer.setMediaItem(mediaItem)
     exoPlayer.prepare()
     exoPlayer.playWhenReady = true
+    exoPlayer.repeatMode = Player.REPEAT_MODE_ALL
 
     return exoPlayer
 }

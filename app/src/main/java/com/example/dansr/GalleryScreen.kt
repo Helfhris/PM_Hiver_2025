@@ -27,6 +27,7 @@ import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Close
+import androidx.compose.material.icons.outlined.Refresh
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Button
 import androidx.compose.ui.Alignment
@@ -44,11 +45,13 @@ import java.io.File
 
 //Cache for thumbnails because the app was lagging when loading them
 object ThumbnailCache {
-    private val cache = LruCache<String, Bitmap>(20) // Keep 20 thumbnails in memory
+    private val cache = LruCache<String, Bitmap>(20)
 
     fun getThumbnail(path: String): Bitmap? = cache.get(path)
     fun putThumbnail(path: String, bitmap: Bitmap) = cache.put(path, bitmap)
+    fun clear() = cache.evictAll()
 }
+
 
 //Pager to be able to swipe between the 3 gallery screens
 @Composable
@@ -79,7 +82,14 @@ fun GalleryPagerScreen(currentScreen: DansRScreen, navController: NavController)
 @Composable
 fun GalleryScreenContent(screen: DansRScreen, navController: NavController) {
     val context = LocalContext.current
-    val videoFiles by remember { mutableStateOf(getAllVideoFiles(context, screen)) }
+    var videoFiles by remember { mutableStateOf(emptyList<String>()) }
+
+    LaunchedEffect(screen) {
+        if (screen == DansRScreen.Uploaded) {
+            ThumbnailCache.clear() // Force refresh miniatures
+        }
+        videoFiles = getAllVideoFiles(context, screen)
+    }
     var selectedVideo by remember { mutableStateOf<String?>(null) }
     var videoDimensions by remember { mutableStateOf<Pair<Int, Int>?>(null) }
     var learningVideo by remember { mutableStateOf<String?>(null) } // Selected video to learn
@@ -191,20 +201,26 @@ fun GalleryScreenContent(screen: DansRScreen, navController: NavController) {
 @Composable
 fun AsyncVideoThumbnail(videoPath: String, onClick: () -> Unit) {
     val context = LocalContext.current
-    val bitmap by produceState<Bitmap?>(null) {
-        value = ThumbnailCache.getThumbnail(videoPath) ?:
-                withContext(Dispatchers.IO) {
-                    extractVideoThumbnail(context, videoPath)?.also {
-                        ThumbnailCache.putThumbnail(videoPath, it)
-                    }
+    val currentOnClick by rememberUpdatedState(onClick)
+
+    val bitmap by produceState<Bitmap?>(null, videoPath) {
+        value = withContext(Dispatchers.IO) {
+            val cached = ThumbnailCache.getThumbnail(videoPath)
+            if (cached != null && cached.width > 10 && cached.height > 10) {
+                cached
+            } else {
+                extractVideoThumbnail(context, videoPath)?.also {
+                    ThumbnailCache.putThumbnail(videoPath, it)
                 }
+            }
+        }
     }
 
     Box(
         modifier = Modifier
             .size(120.dp)
             .padding(4.dp)
-            .clickable(onClick = onClick)
+            .clickable(onClick = currentOnClick)
     ) {
         if (bitmap != null) {
             Image(
@@ -217,6 +233,7 @@ fun AsyncVideoThumbnail(videoPath: String, onClick: () -> Unit) {
         }
     }
 }
+
 
 @Composable
 fun PlaceholderThumbnail() {
@@ -278,8 +295,11 @@ fun getVideoFilesFromInternal(context: Context, screen: DansRScreen): List<Strin
     val videoDir = context.filesDir.resolve("videos")
     if (!videoDir.exists() || !videoDir.isDirectory) return emptyList()
 
+    Log.d("GalleryDebug", "Internal video files: ${videoDir.listFiles()?.map { it.name }}")
+
     return videoDir.listFiles { file -> file.extension == "mp4" }?.filter { file ->
         val status = statuses.find { it.fileName == file.name }
+        Log.d("GalleryDebug", "Checking video: ${file.name} -> $status")
         when (screen) {
             DansRScreen.Likes -> status?.isLiked == true
             DansRScreen.Saved -> status?.isSaved == true
@@ -292,6 +312,9 @@ fun getVideoFilesFromInternal(context: Context, screen: DansRScreen): List<Strin
 fun getAllVideoFiles(context: Context, screen: DansRScreen): List<String> {
     val assets = getVideoFilesFromAssets(context, screen)
     val internal = getVideoFilesFromInternal(context, screen)
+
+    Log.d("GalleryDebug", "All videos for ${screen.name}: $assets + $internal")
+
     return assets + internal
 }
 

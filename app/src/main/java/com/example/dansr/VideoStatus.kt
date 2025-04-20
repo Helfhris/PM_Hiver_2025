@@ -20,23 +20,34 @@ private fun getStatusFile(context: Context): File {
 private val videoStatusCache = mutableMapOf<String, List<VideoStatus>>()
 
 fun loadVideoStatuses(context: Context): List<VideoStatus> {
-    return videoStatusCache.getOrPut("status") {
-        // Original loading code
-        val jsonFile = File(context.filesDir, "videos/status.json")
-        if (jsonFile.exists()) {
-            Gson().fromJson(jsonFile.readText(), object : TypeToken<List<VideoStatus>>() {}.type)
-                ?: emptyList()
-        } else {
+    val statusFile = getStatusFile(context)
+    return if (statusFile.exists()) {
+        try {
+            val jsonString = statusFile.readText()
+            Log.d("StatusLoadDebug", "Loaded JSON: $jsonString")
+            val listType = object : TypeToken<List<VideoStatus>>() {}.type
+            Gson().fromJson(jsonString, listType)
+        } catch (e: Exception) {
+            Log.e("StatusLoadDebug", "Error parsing JSON", e)
             emptyList()
         }
+    } else {
+        emptyList()
     }
 }
+
 
 fun saveVideoStatuses(context: Context, statuses: List<VideoStatus>) {
     val statusFile = getStatusFile(context)
     statusFile.parentFile?.mkdirs() // Create directory if needed
     val jsonString = Gson().toJson(statuses)
-    statusFile.writeText(jsonString)
+    Log.d("StatusLoadDebug", "Saving statuses: $statuses")
+    try {
+        statusFile.writeText(jsonString)
+        Log.d("saveVideoStatuses", "Status file saved successfully.")
+    } catch (e: Exception) {
+        Log.e("saveVideoStatuses", "Error saving status file", e)
+    }
 }
 
 fun markVideoAsSaved(context: Context, fileName: String) {
