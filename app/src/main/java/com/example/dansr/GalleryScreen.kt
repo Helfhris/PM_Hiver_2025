@@ -166,20 +166,22 @@ fun GalleryScreenContent(screen: DansRScreen, navController: NavController) {
                         .align(Alignment.Center)
                 )
 
-                // Button "Learn this Dance"
-                Button(
-                    onClick = {
-                        learningVideo = videoPath // Put Video as to be Learned
-                        selectedVideo = null      // Close Playing
-                        exoPlayer.release()
-                        val encodedPath = Uri.encode(videoPath)
-                        navController.navigate("LearningScreen/$encodedPath")
-                    },
-                    modifier = Modifier
-                        .align(Alignment.BottomCenter)
-                        .padding(16.dp)
-                ) {
-                    Text("Learn this Dance")
+                // Button "Learn this Dance" (only if not in Uploaded tab)
+                if (screen != DansRScreen.Uploaded) {
+                    Button(
+                        onClick = {
+                            learningVideo = videoPath // Put Video as to be Learned
+                            selectedVideo = null      // Close Playing
+                            exoPlayer.release()
+                            val encodedPath = Uri.encode(videoPath)
+                            navController.navigate("LearningScreen/$encodedPath")
+                        },
+                        modifier = Modifier
+                            .align(Alignment.BottomCenter)
+                            .padding(16.dp)
+                    ) {
+                        Text("Learn this Dance")
+                    }
                 }
 
                 // Close button
