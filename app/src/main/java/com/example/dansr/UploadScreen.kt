@@ -16,6 +16,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.FileProvider
 import android.widget.VideoView
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Replay
+import androidx.compose.material.icons.filled.Upload
 import androidx.compose.ui.res.stringResource
 import androidx.navigation.NavController
 import java.io.File
@@ -65,23 +68,45 @@ fun VideoCaptureScreen(navController: NavController) {
                 verticalArrangement = Arrangement.Bottom,
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
+                // Display icons
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(16.dp),
-                    horizontalArrangement = Arrangement.SpaceEvenly
+                    horizontalArrangement = Arrangement.SpaceEvenly,
                 ) {
-                    Button(onClick = { videoUri = null }) { Text(text = stringResource(id = R.string.upload_retry)) }
-                    Button(onClick = {
-                        videoUri?.let { uri ->
-                            publishUserVideo(context, uri)
-
-                            navController.navigate(DansRScreen.Start.name)
-                        }
-                    }) {
-                        Text(text = stringResource(id = R.string.upload_publish))
+                    IconButton(
+                        onClick = { videoUri = null },
+                        modifier = Modifier
+                            .background(MaterialTheme.colorScheme.tertiaryContainer, shape = MaterialTheme.shapes.medium)
+                            .padding(8.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Replay,
+                            contentDescription = "Replay",
+                            tint = MaterialTheme.colorScheme.onTertiaryContainer,
+                            modifier = Modifier.size(32.dp)
+                        )
                     }
 
+                    IconButton(
+                        onClick = {
+                            videoUri?.let { uri ->
+                                publishUserVideo(context, uri)
+                                navController.navigate(DansRScreen.Start.name)
+                            }
+                        },
+                        modifier = Modifier
+                            .background(MaterialTheme.colorScheme.tertiaryContainer, shape = MaterialTheme.shapes.medium)
+                            .padding(8.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Upload,
+                            contentDescription = "Publish",
+                            tint = MaterialTheme.colorScheme.onTertiaryContainer,
+                            modifier = Modifier.size(32.dp)
+                        )
+                    }
                 }
             }
         }
