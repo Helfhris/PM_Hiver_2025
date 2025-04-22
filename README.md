@@ -64,6 +64,17 @@ Martin Chauvelière    CHAM25090200
 
 ## Imiter une danse
 
+* Cette fonctionnalité permet à l'utilisateur de visionner une vidéo modèle (fournie dans les assets), puis d'enregistrer sa propre tentative d’imitation directement via la caméra.
+* L’expérience utilisateur se déroule en trois étapes :
+  * Lecture du modèle avec des contrôles de lecture (play/pause, replay, démarrer imitation).
+  * Enregistrement vidéo via la caméra intégrée.
+  * Comparaison des deux vidéos :
+    * Les vidéos sont affichées simultanément (grande + vignette), avec possibilité de les inverser d’un simple tap.
+    * Les vidéos se relancent automatiquement en boucle à la fin pour une meilleure comparaison.
+    * L'utilisateur peut rejouer l'enregistrement ou publier sa vidéo via les boutons en surimpression.
+* Une fois publiée, la vidéo est copiée dans un répertoire interne et ajoutée au fichier status.json avec le flag isUploaded = true.
+* L'utilisation d'ExoPlayer permet une lecture fluide à partir des fichiers locaux, qu'ils proviennent des assets ou du stockage interne.
+
 ## Gestion des fichiers vidéos
 
 * Nos fichiers de vidéos sont stockés en local, nous n'avons rien en dehors de l'application elle-même.
