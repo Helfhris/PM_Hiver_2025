@@ -55,6 +55,13 @@ Martin Chauvelière    CHAM25090200
 
 ## Upload simple
 
+* L’écran d’upload permet à l’utilisateur d’ajouter ses propres vidéos à l’application via deux méthodes : soit en enregistrant directement une vidéo depuis l’appareil photo, soit en sélectionnant une vidéo existante depuis la galerie.
+* Une fois la vidéo sélectionnée ou capturée, une prévisualisation est affichée à l’utilisateur grâce à un composant VideoPlayer.
+* Deux options sont ensuite proposées :
+  * Recommencer l’enregistrement ou la sélection via l’icône de relecture.
+  * Publier la vidéo via l’icône d’upload, ce qui déclenche la fonction publishUserVideo, puis redirige automatiquement vers l’écran d’accueil (DansRScreen.Start).
+* La capture vidéo utilise le système de cache pour stocker temporairement les fichiers. L’URI du fichier est géré avec un FileProvider pour assurer la compatibilité Android.
+
 ## Imiter une danse
 
 ## Gestion des fichiers vidéos
