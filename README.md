@@ -49,6 +49,10 @@ Martin Chauvelière    CHAM25090200
 
 ## Ressources
 
+* Les ressources sont un endroit où les utilisateurs peuvent retrouver des ressources recommandés pour nous les développeurs afin d'apprendre à mieux dancer. Il y a pour l'instant une redirection vers youtube pour des vidéos, deux sites différents dont Steezy qui est parfait pour un débutant comme pour quelqu'un qui a déjà des bases et finalement il y a aussi une redirection vers une playlist spotify afin de mettre un peu de musique pour dancer chez soi tranquillement.
+* Ce système de ressources est simple, il part d'une data class qui regroupe le titre de la ressource, la description de la ressource ainsi que l'url de redirection qui sera utilisé lorsque l'utilisateur clique sur la ressource.
+* Il suffit ensuite de rajouter ces données dans les ressources à la suite des autres pour bien ranger le code et ensuite de le rajouter dans la liste d'info card qui se trouve dans le "Datasource" file.
+
 ## Upload simple
 
 ## Imiter une danse
