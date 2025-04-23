@@ -1,3 +1,41 @@
 <resources>
     <string name="app_name">DansR</string>
+    <string name="back_button">Back</string>
+    <string name="likes">Likes</string>
+    <string name="saved">Saved</string>
+    <string name="uploaded">Uploaded</string>
+    <string name="upload">Upload</string>
+    <string name="resources">Resources</string>
+    <string name="learningScreen">Learning</string>
+    <string name="logo_description">The logo of the DansR app</string>
+    <string name="upload_publish">Publish</string>
+    <string name="upload_retry">Retry</string>
+    <string name="upload_gallery">From your gallery</string>">
+    <string name="upload_camera">From your camera</string>">
+
+    <string name="gallery_icon">Gallery pages icon</string>
+    <string name="start_icon">Home page icon</string>
+    <string name="upload_icon">Upload page icon</string>
+    <string name="likes_icon">Likes page icon</string>
+    <string name="saved_icon">Saved page icon</string>
+    <string name="uploaded_icon">Uploaded page icon</string>
+    <string name="resources_icon">Resources page icon</string>
+    <string name="learning_icon">Learning page icon</string>
+    <string name="user_icon">User icon</string>
+
+    <string name="titleResource1">Learn to Dance</string>
+    <string name="titleResource2">Useful Youtube channels</string>
+    <string name="titleResource3">Music to dance to</string>
+    <string name="titleResource4">Steezy Website</string>
+
+    <string name="descriptionResource1">Website to learn how to dance</string>
+    <string name="descriptionResource2">Youtube Channels to learn videos for beginners</string>
+    <string name="descriptionResource3">Spotify Playlist</string>
+    <string name="descriptionResource4">Website to learn step by step Dances for free or with a subscription</string>
+
+    <string name="urlResource1">https://www.danceclass.com/</string>
+    <string name="urlResource2">https://www.youtube.com/results?search_query=dance+beginner+tutorial</string>
+    <string name="urlResource3">https://open.spotify.com/playlist/37i9dQZF1DX70RN3TfWWJh</string>
+    <string name="urlResource4">https://www.steezy.co</string>
+
 </resources>

@@ -1,47 +1,61 @@
 package com.example.dansr
 
+import com.example.dansr.preferences.UsageTracker
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
+import android.util.Log
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
 import com.example.dansr.ui.theme.DansRTheme
 
 class MainActivity : ComponentActivity() {
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
-        setContent {
-            DansRTheme {
-                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    Greeting(
-                        name = "Android",
-                        modifier = Modifier.padding(innerPadding)
-                    )
-                }
+
+    private lateinit var usageTracker: UsageTracker
+    private var startTime: Long = 0L
+    private val handler = Handler(Looper.getMainLooper())
+    private val checkUsageRunnable = object : Runnable {
+        override fun run() {
+            val elapsedTime = System.currentTimeMillis() - startTime
+            usageTracker.updateUsage(elapsedTime) // Update stored usage time
+            startTime = System.currentTimeMillis() // Reset start time
+            val usedTime = usageTracker.getTodayUsage()
+
+            if (usedTime >= 30 * 60 * 1000) { // 30 minutes in milliseconds
+                Toast.makeText(this@MainActivity, "Daily limit reached!", Toast.LENGTH_LONG).show()
+                finishAffinity() // Close the app
+            } else {
+                Log.d("com.example.dansr.preferences.UsageTracker", "Current usage time: $usedTime ms") // Log current usage time
+                handler.postDelayed(this, 1000) // Check every second
             }
         }
     }
-}
 
-@Composable
-fun Greeting(name: String, modifier: Modifier = Modifier) {
-    Text(
-        text = "Hello $name!",
-        modifier = modifier
-    )
-}
 
-@Preview(showBackground = true)
-@Composable
-fun GreetingPreview() {
-    DansRTheme {
-        Greeting("Android")
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        initVideoStatusFile(this)
+        setContent {
+            DansRTheme {
+                DansRApp()
+            }
+        }
+        usageTracker = UsageTracker(this)
+    }
+
+
+    override fun onResume() {
+        super.onResume()
+        startTime = System.currentTimeMillis()
+        handler.post(checkUsageRunnable) // Start checking usage
+    }
+
+    override fun onPause() {
+        super.onPause()
+        val elapsedTime = System.currentTimeMillis() - startTime
+        usageTracker.updateUsage(elapsedTime)
+        handler.removeCallbacks(checkUsageRunnable) // Stop checking when paused
     }
 }
+
