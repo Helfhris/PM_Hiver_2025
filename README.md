@@ -14,6 +14,8 @@ Martin Chauvelière    CHAM25090200
 
 ## Général
 
+* Il faut donner l'autorisation de la caméra, de l'accès aux fichiers et du micro afin de pouvoir utiliser l'application.
+
 * L'application contient une limite d'utilisation en temps par jour de 30 minutes. Cette limite est définie ligne 25 du fichier MainActivity.kt. Pour la modifier il suffit de changer le temps ici, en notant que celui-ci est en millisecondes. Les méthodes concernant cette limite sont dans le fichier com.example.dansr/preferences/UsageTracker.kt.
 
 * On utilise les icones de [Google Fonts](https://fonts.google.com/icons).
