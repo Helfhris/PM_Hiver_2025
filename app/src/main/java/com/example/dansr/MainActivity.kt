@@ -22,7 +22,7 @@ class MainActivity : ComponentActivity() {
             startTime = System.currentTimeMillis() // Reset start time
             val usedTime = usageTracker.getTodayUsage()
 
-            if (usedTime >= 500 * 60 * 1000) { // 30 minutes in milliseconds
+            if (usedTime >= 30 * 60 * 1000) { // 30 minutes in milliseconds
                 Toast.makeText(this@MainActivity, "Daily limit reached!", Toast.LENGTH_LONG).show()
                 finishAffinity() // Close the app
             } else {
